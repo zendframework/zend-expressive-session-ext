@@ -1,0 +1,67 @@
+{
+    "name": "zendframework/zend-expressive-session-ext",
+    "description": "ext-session persistence adapter for zend-expressive-session",
+    "type": "library",
+    "license": "BSD-3-Clause",
+    "keywords": [
+        "components",
+        "ext-session",
+        "psr-7",
+        "session",
+        "zf",
+        "zendframework"
+    ],
+    "support": {
+        "docs": "https://docs.zendframework.com/zend-expressive-session-ext/",
+        "issues": "https://github.com/zendframework/zend-expressive-session-ext/issues",
+        "source": "https://github.com/zendframework/zend-expressive-session-ext",
+        "slack": "https://zendframework-slack.herokuapp.com",
+        "forum": "https://discourse.zendframework.com/c/questions/components"
+    },
+    "config": {
+        "sort-packages": true
+    },
+    "repositories": [
+        {"type": "vcs", "url": "https://github.com/weierophinney/zend-expressive-session"}
+    ],
+    "require": {
+        "php": "^7.1",
+        "ext-session": "*",
+        "dflydev/fig-cookies": "^1.0",
+        "zendframework/zend-expressive-session": "dev-master"
+    },
+    "require-dev": {
+        "phpunit/phpunit": "^6.0.9",
+        "zendframework/zend-coding-standard": "~1.0.0",
+        "zendframework/zend-diactoros": "^1.6"
+    },
+    "autoload": {
+        "psr-4": {
+            "Zend\\Expressive\\Session\\Ext\\": "src/"
+        }
+    },
+    "autoload-dev": {
+        "psr-4": {
+            "ZendTest\\Expressive\\Session\\Ext\\": "test/"
+        }
+    },
+    "extra": {
+        "branch-alias": {
+            "dev-master": "1.0-dev"
+        },
+        "zf": {
+            "config-provider": "Zend\\Expressive\\Session\\Ext\\ConfigProvider"
+        }
+    },
+    "scripts": {
+        "check": [
+            "@cs-check",
+            "@test"
+        ],
+        "cs-check": "phpcs",
+        "cs-fix": "phpcbf",
+        "test": "phpunit --colors=always",
+        "test-coverage": "phpunit --colors=always --coverage-clover clover.xml",
+        "upload-coverage": "coveralls -v"
+    }
+}
