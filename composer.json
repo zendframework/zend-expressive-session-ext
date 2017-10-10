@@ -21,14 +21,11 @@
     "config": {
         "sort-packages": true
     },
-    "repositories": [
-        {"type": "vcs", "url": "https://github.com/weierophinney/zend-expressive-session"}
-    ],
     "require": {
         "php": "^7.1",
         "ext-session": "*",
         "dflydev/fig-cookies": "^1.0",
-        "zendframework/zend-expressive-session": "dev-master"
+        "zendframework/zend-expressive-session": "^0.1.0"
     },
     "require-dev": {
         "phpunit/phpunit": "^6.0.9",

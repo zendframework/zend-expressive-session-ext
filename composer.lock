@@ -4,7 +4,7 @@
         "Read more about it at https://getcomposer.org/doc/01-basic-usage.md#composer-lock-the-lock-file",
         "This file is @generated automatically"
     ],
-    "content-hash": "56980c7b1a9c4bad9ff37525647be9b3",
+    "content-hash": "ae527301b42a83546269e07682b3c553",
     "packages": [
         {
             "name": "dflydev/fig-cookies",
@@ -211,28 +211,31 @@
         },
         {
             "name": "zendframework/zend-expressive-session",
-            "version": "dev-master",
+            "version": "0.1.0",
             "source": {
                 "type": "git",
-                "url": "https://github.com/weierophinney/zend-expressive-session.git",
-                "reference": "75205a0f31f2d0c51e4095c83d5d5c60ea0f576f"
+                "url": "https://github.com/zendframework/zend-expressive-session.git",
+                "reference": "9e44991582955359ee48bb4f786ed064809baf80"
             },
             "dist": {
                 "type": "zip",
-                "url": "https://api.github.com/repos/weierophinney/zend-expressive-session/zipball/75205a0f31f2d0c51e4095c83d5d5c60ea0f576f",
-                "reference": "75205a0f31f2d0c51e4095c83d5d5c60ea0f576f",
+                "url": "https://api.github.com/repos/zendframework/zend-expressive-session/zipball/9e44991582955359ee48bb4f786ed064809baf80",
+                "reference": "9e44991582955359ee48bb4f786ed064809baf80",
                 "shasum": ""
             },
             "require": {
-                "dflydev/fig-cookies": "^1.0",
                 "http-interop/http-middleware": "^0.4.1",
                 "php": "^7.1",
                 "psr/container": "^1.0"
             },
             "require-dev": {
                 "phpunit/phpunit": "^6.0.9",
-                "zendframework/zend-coding-standard": "~1.0.0",
-                "zendframework/zend-diactoros": "^1.6"
+                "zendframework/zend-coding-standard": "~1.0.0"
+            },
+            "suggest": {
+                "zendframework/zend-expressive-csrf": "^1.0 || ^1.0-dev for CSRF protection capabilities",
+                "zendframework/zend-expressive-flash": "^1.0 || ^1.0-dev for flash message capabilities",
+                "zendframework/zend-expressive-session-ext": "^1.0 || ^1.0-dev for an ext-session persistence adapter"
             },
             "type": "library",
             "extra": {
@@ -248,49 +251,20 @@
                     "Zend\\Expressive\\Session\\": "src/"
                 }
             },
-            "autoload-dev": {
-                "psr-4": {
-                    "ZendTest\\Expressive\\Session\\": "test/"
-                }
-            },
-            "scripts": {
-                "check": [
-                    "@cs-check",
-                    "@test"
-                ],
-                "cs-check": [
-                    "phpcs"
-                ],
-                "cs-fix": [
-                    "phpcbf"
-                ],
-                "test": [
-                    "phpunit --colors=always"
-                ],
-                "test-coverage": [
-                    "phpunit --colors=always --coverage-clover clover.xml"
-                ],
-                "upload-coverage": [
-                    "coveralls -v"
-                ]
-            },
+            "notification-url": "https://packagist.org/downloads/",
             "license": [
                 "BSD-3-Clause"
             ],
-            "description": "Description of project goes here",
+            "description": "Session container and middleware for PSR-7 applications",
             "keywords": [
+                "ZendFramework",
                 "expressive",
-                "zendframework",
+                "middleware",
+                "psr-7",
+                "session",
                 "zf"
             ],
-            "support": {
-                "docs": "https://docs.zendframework.com/zend-expressive-session/",
-                "issues": "https://github.com/zendframework/zend-expressive-session/issues",
-                "source": "https://github.com/zendframework/zend-expressive-session",
-                "slack": "https://zendframework-slack.herokuapp.com",
-                "forum": "https://discourse.zendframework.com/c/questions/expressive"
-            },
-            "time": "2017-10-10T13:53:03+00:00"
+            "time": "2017-10-10T18:50:17+00:00"
         }
     ],
     "packages-dev": [
@@ -1905,9 +1879,7 @@
     ],
     "aliases": [],
     "minimum-stability": "stable",
-    "stability-flags": {
-        "zendframework/zend-expressive-session": 20
-    },
+    "stability-flags": [],
     "prefer-stable": false,
     "prefer-lowest": false,
     "platform": {
