@@ -1,0 +1,49 @@
+{
+    "docs": [
+        {
+            "location": "/",
+            "text": "zend-expressive-session-ext\n\n\n\n\n\n\nProvides an ext-session persistence adapter for use with\n\nzend-expressive-session\n.\n\n\nInstallation\n\n\nRun the following to install this library:\n\n\n$ composer require zendframework/zend-expressive-session-ext\n\n\n\n\nDocumentation\n\n\nDocumentation is \nin the doc tree\n, and can be compiled using \nmkdocs\n:\n\n\n$ mkdocs build\n\n\n\n\nYou may also \nbrowse the documentation online\n.",
+            "title": "Home"
+        },
+        {
+            "location": "/#zend-expressive-session-ext",
+            "text": "Provides an ext-session persistence adapter for use with zend-expressive-session .",
+            "title": "zend-expressive-session-ext"
+        },
+        {
+            "location": "/#installation",
+            "text": "Run the following to install this library:  $ composer require zendframework/zend-expressive-session-ext",
+            "title": "Installation"
+        },
+        {
+            "location": "/#documentation",
+            "text": "Documentation is  in the doc tree , and can be compiled using  mkdocs :  $ mkdocs build  You may also  browse the documentation online .",
+            "title": "Documentation"
+        },
+        {
+            "location": "/intro/",
+            "text": "zend-expressive-session-ext\n\n\nThis component provides a persistence adapter for use with\n\nzend-expressive-session\n.\n\n\nInstallation:\n\n\nRun the following to install this library:\n\n\n$ composer require zendframework/zend-expressive-session-ext\n\n\n\n\nConfiguration\n\n\nIf your application uses the \nzend-component-installer\n\nComposer plugin, your configuration is complete; the shipped\n\nZend\\Expressive\\Session\\Ext\\ConfigProvider\n registers the\n\nZend\\Expressive\\Session\\Ext\\PhpSessionPersistence\n service, as well as an alias\nto it under the name \nZend\\Expressive\\Session\\SessionPersistenceInterface\n.\n\n\nOtherwise, you will need to map \nZend\\Expressive\\Session\\SessionPersistenceInterface\n\nto \nZend\\Expressive\\Session\\Ext\\PhpSessionPersistence\n in your dependency\ninjection container.\n\n\nUsage\n\n\nIn most cases, usage will be via \nZend\\Expressive\\Session\\SessionMiddleware\n,\nand will not require direct access to the service on your part. If you do need\nto use it, please refer to the zend-expressive-session \nsession persistence\ndocumentation\n.",
+            "title": "Introduction"
+        },
+        {
+            "location": "/intro/#zend-expressive-session-ext",
+            "text": "This component provides a persistence adapter for use with zend-expressive-session .",
+            "title": "zend-expressive-session-ext"
+        },
+        {
+            "location": "/intro/#installation",
+            "text": "Run the following to install this library:  $ composer require zendframework/zend-expressive-session-ext",
+            "title": "Installation:"
+        },
+        {
+            "location": "/intro/#configuration",
+            "text": "If your application uses the  zend-component-installer \nComposer plugin, your configuration is complete; the shipped Zend\\Expressive\\Session\\Ext\\ConfigProvider  registers the Zend\\Expressive\\Session\\Ext\\PhpSessionPersistence  service, as well as an alias\nto it under the name  Zend\\Expressive\\Session\\SessionPersistenceInterface .  Otherwise, you will need to map  Zend\\Expressive\\Session\\SessionPersistenceInterface \nto  Zend\\Expressive\\Session\\Ext\\PhpSessionPersistence  in your dependency\ninjection container.",
+            "title": "Configuration"
+        },
+        {
+            "location": "/intro/#usage",
+            "text": "In most cases, usage will be via  Zend\\Expressive\\Session\\SessionMiddleware ,\nand will not require direct access to the service on your part. If you do need\nto use it, please refer to the zend-expressive-session  session persistence\ndocumentation .",
+            "title": "Usage"
+        }
+    ]
+}
