@@ -7,6 +7,8 @@
 
 namespace Zend\Expressive\Session\Ext;
 
+use Zend\Expressive\Session\SessionPersistenceInterface;
+
 class ConfigProvider
 {
     public function __invoke() : array
@@ -19,6 +21,9 @@ class ConfigProvider
     public function getDependencies() : array
     {
         return [
+            'aliases' => [
+                SessionPersistenceInterface::class => PhpSessionPersistence::class,
+            ],
             'invokables' => [
                 PhpSessionPersistence::class => PhpSessionPersistence::class,
             ],
