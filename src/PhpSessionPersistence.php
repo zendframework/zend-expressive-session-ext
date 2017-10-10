@@ -77,7 +77,6 @@ class PhpSessionPersistence implements SessionPersistenceInterface
         session_commit();
         ini_set('session.use_strict_mode', 0);
         $this->startSession($this->generateSessionId());
-        ini_set('session.use_strict_mode', 1);
     }
 
     /**
