@@ -31,9 +31,12 @@ use Zend\Expressive\Session\SessionPersistenceInterface;
  */
 class PhpSessionPersistence implements SessionPersistenceInterface
 {
+    private $cookie;
+
     public function initializeSessionFromRequest(ServerRequestInterface $request) : SessionInterface
     {
-        $id = FigRequestCookies::get($request, session_name())->getValue() ?: $this->generateSessionId();
+        $this->cookie = FigRequestCookies::get($request, session_name())->getValue();
+        $id = $this->cookie ?: $this->generateSessionId();
         $this->startSession($id);
         return new Session($_SESSION);
     }
@@ -47,15 +50,15 @@ class PhpSessionPersistence implements SessionPersistenceInterface
         $_SESSION = $session->toArray();
         session_write_close();
 
-        if (empty($_SESSION)) {
-            return $response;
+        if (empty($this->cookie)) {
+            $sessionCookie = SetCookie::create(session_name())
+                ->withValue(session_id())
+                ->withPath(ini_get('session.cookie_path'));
+
+            return FigResponseCookies::set($response, $sessionCookie);
         }
 
-        $sessionCookie = SetCookie::create(session_name())
-            ->withValue(session_id())
-            ->withPath(ini_get('session.cookie_path'));
-
-        return FigResponseCookies::set($response, $sessionCookie);
+        return $response;
     }
 
     private function startSession(string $id) : void
