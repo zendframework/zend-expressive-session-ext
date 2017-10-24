@@ -61,13 +61,13 @@ class PhpSessionPersistence implements SessionPersistenceInterface
         return $response;
     }
 
-    private function startSession(string $id) : void
+    private function startSession(string $id, array $options = []) : void
     {
         session_id($id);
-        session_start([
+        session_start(array_merge([
             'use_cookies'      => false,
             'use_only_cookies' => true,
-        ]);
+        ], $options));
     }
 
     /**
@@ -78,8 +78,9 @@ class PhpSessionPersistence implements SessionPersistenceInterface
     private function regenerateSession() : void
     {
         session_commit();
-        ini_set('session.use_strict_mode', 0);
-        $this->startSession($this->generateSessionId());
+        $this->startSession($this->generateSessionId(), [
+            'use_strict_mode' => false,
+        ]);
     }
 
     /**
