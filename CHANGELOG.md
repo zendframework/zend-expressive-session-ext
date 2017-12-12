@@ -2,6 +2,29 @@
 
 All notable changes to this project will be documented in this file, in reverse chronological order by release.
 
+## 0.1.2 - 2017-12-12
+
+### Added
+
+- [#3](https://github.com/zendframework/zend-expressive-session-ext/pull/3) adds
+  support for the 1.0-dev and 1.0 releases of zend-expressive-session.
+
+### Changed
+
+- Nothing.
+
+### Deprecated
+
+- Nothing.
+
+### Removed
+
+- Nothing.
+
+### Fixed
+
+- Nothing.
+
 ## 0.1.1 - 2017-10-10
 
 ### Added
