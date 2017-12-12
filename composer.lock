@@ -4,7 +4,7 @@
         "Read more about it at https://getcomposer.org/doc/01-basic-usage.md#composer-lock-the-lock-file",
         "This file is @generated automatically"
     ],
-    "content-hash": "01323d32afb3e5b0b01192cdeb202848",
+    "content-hash": "45c1978ba57b33c95124562cbc7b4159",
     "packages": [
         {
             "name": "dflydev/fig-cookies",
@@ -108,6 +108,7 @@
                 "request",
                 "response"
             ],
+            "abandoned": "http-interop/http-server-middleware",
             "time": "2017-01-14T15:23:42+00:00"
         },
         {
@@ -1882,7 +1883,9 @@
     ],
     "aliases": [],
     "minimum-stability": "stable",
-    "stability-flags": [],
+    "stability-flags": {
+        "zendframework/zend-expressive-session": 20
+    },
     "prefer-stable": false,
     "prefer-lowest": false,
     "platform": {
