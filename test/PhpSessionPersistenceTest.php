@@ -70,16 +70,6 @@ class PhpSessionPersistenceTest extends TestCase
         $this->assertSame('use-this-id', $id);
     }
 
-    public function testPersistSessionReturnsOriginalResposneIfSessionIsEmpty()
-    {
-        $this->startSession();
-        $session = new Session([]);
-        $response = new Response();
-
-        $returnedResponse = $this->persistence->persistSession($session, $response);
-        $this->assertSame($response, $returnedResponse);
-    }
-
     public function testPersistSessionReturnsResponseWithSetCookieHeaderIfSessionHasContents()
     {
         $this->startSession();
