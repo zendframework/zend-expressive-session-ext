@@ -77,23 +77,6 @@ class PhpSessionPersistenceTest extends TestCase
         $this->assertSame('use-this-id', $id);
     }
 
-    public function testPersistSessionReturnsResponseWithSetCookieHeaderIfSessionHasContents()
-    {
-        $this->startSession();
-        $session = new Session(['foo' => 'bar']);
-        $response = new Response();
-
-        $returnedResponse = $this->persistence->persistSession($session, $response);
-        $this->assertNotSame($response, $returnedResponse);
-
-        $setCookie = FigResponseCookies::get($returnedResponse, session_name());
-        $this->assertInstanceOf(SetCookie::class, $setCookie);
-        $this->assertSame(session_id(), $setCookie->getValue());
-        $this->assertSame(ini_get('session.cookie_path'), $setCookie->getPath());
-
-        $this->assertSame($session->toArray(), $_SESSION);
-    }
-
     public function testPersistSessionGeneratesCookieWithNewSessionIdIfSessionWasRegenerated()
     {
         $this->startSession('original-id');
