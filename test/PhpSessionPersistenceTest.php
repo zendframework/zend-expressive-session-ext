@@ -114,6 +114,9 @@ class PhpSessionPersistenceTest extends TestCase
         $this->assertSame($session->toArray(), $_SESSION);
     }
 
+    /**
+     * If Session COOKIE is present, persistSession() method must return the original Response
+     */
     public function testPersistSessionReturnsOriginalResposneIfSessionCookiePresent()
     {
         $sessionName = session_name();
@@ -128,5 +131,23 @@ class PhpSessionPersistenceTest extends TestCase
         $response = new Response();
         $returnedResponse = $this->persistence->persistSession($session, $response);
         $this->assertSame($response, $returnedResponse);
+    }
+
+    /**
+     * If Session COOKIE is not present, persistSession() method must return Response with Set-Cookie header
+     */
+    public function testPersistSessionReturnsResponseWithSetCookieHeaderIfNoSessionCookiePresent()
+    {
+        $this->startSession();
+        $session = new Session([]);
+        $response = new Response();
+
+        $returnedResponse = $this->persistence->persistSession($session, $response);
+        $this->assertNotSame($response, $returnedResponse);
+
+        $setCookie = FigResponseCookies::get($returnedResponse, session_name());
+        $this->assertInstanceOf(SetCookie::class, $setCookie);
+        $this->assertSame(session_id(), $setCookie->getValue());
+        $this->assertSame(ini_get('session.cookie_path'), $setCookie->getPath());
     }
 }
