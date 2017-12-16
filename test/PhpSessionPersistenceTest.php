@@ -12,6 +12,7 @@ use Dflydev\FigCookies\FigRequestCookies;
 use Dflydev\FigCookies\FigResponseCookies;
 use Dflydev\FigCookies\SetCookie;
 use PHPUnit\Framework\TestCase;
+use Psr\Http\Message\ServerRequestInterface;
 use Zend\Diactoros\Response;
 use Zend\Diactoros\ServerRequest;
 use Zend\Expressive\Session\Ext\PhpSessionPersistence;
@@ -22,6 +23,11 @@ use Zend\Expressive\Session\Session;
  */
 class PhpSessionPersistenceTest extends TestCase
 {
+    /**
+     * @var PhpSessionPersistence
+     */
+    private $persistence;
+
     public function setUp()
     {
         $this->persistence = new PhpSessionPersistence();
@@ -56,6 +62,7 @@ class PhpSessionPersistenceTest extends TestCase
         $this->assertSame(PHP_SESSION_NONE, session_status());
         $sessionName = session_name();
 
+        /** @var ServerRequestInterface $request */
         $request = FigRequestCookies::set(
             new ServerRequest(),
             Cookie::create($sessionName, 'use-this-id')
@@ -105,5 +112,21 @@ class PhpSessionPersistenceTest extends TestCase
         $this->assertSame(session_id(), $setCookie->getValue());
 
         $this->assertSame($session->toArray(), $_SESSION);
+    }
+
+    public function testPersistSessionReturnsOriginalResposneIfSessionCookiePresent()
+    {
+        $sessionName = session_name();
+
+        /** @var ServerRequestInterface $request */
+        $request = FigRequestCookies::set(
+            new ServerRequest(),
+            Cookie::create($sessionName, 'use-this-id')
+        );
+
+        $session = $this->persistence->initializeSessionFromRequest($request);
+        $response = new Response();
+        $returnedResponse = $this->persistence->persistSession($session, $response);
+        $this->assertSame($response, $returnedResponse);
     }
 }
