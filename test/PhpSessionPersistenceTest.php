@@ -133,4 +133,12 @@ class PhpSessionPersistenceTest extends TestCase
         $this->assertSame(session_id(), $setCookie->getValue());
         $this->assertSame(ini_get('session.cookie_path'), $setCookie->getPath());
     }
+
+    public function testPersistSessionIfSessionHasContents()
+    {
+        $this->startSession();
+        $session = new Session(['foo' => 'bar']);
+        $this->persistence->persistSession($session, new Response);
+        $this->assertSame($session->toArray(), $_SESSION);
+    }
 }
