@@ -3,7 +3,7 @@
         {
             "location": "/",
             "text": "zend-expressive-session-ext\n\n\n\n\n\n\nProvides an ext-session persistence adapter for use with\n\nzend-expressive-session\n.\n\n\nInstallation\n\n\nRun the following to install this library:\n\n\n$ composer require zendframework/zend-expressive-session-ext\n\n\n\nDocumentation\n\n\nDocumentation is \nin the doc tree\n, and can be compiled using \nmkdocs\n:\n\n\n$ mkdocs build\n\n\n\nYou may also \nbrowse the documentation online\n.",
-            "title": "Home"
+            "title": "zend-expressive-session-ext"
         },
         {
             "location": "/#zend-expressive-session-ext",
