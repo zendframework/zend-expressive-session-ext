@@ -23,7 +23,7 @@
         "php": "^7.1",
         "ext-session": "*",
         "dflydev/fig-cookies": "^1.0",
-        "zendframework/zend-expressive-session": "^0.1.0 || ^1.0.0-dev || ^1.0.0"
+        "zendframework/zend-expressive-session": "^0.1.0 || ^1.0.0-dev || ^1.0.0alpha1 || ^1.0.0"
     },
     "require-dev": {
         "phpunit/phpunit": "^6.4.3",
