@@ -2,6 +2,31 @@
 
 All notable changes to this project will be documented in this file, in reverse chronological order by release.
 
+## 0.1.4 - 2018-02-28
+
+### Added
+
+- Nothing.
+
+### Changed
+
+- Nothing.
+
+### Deprecated
+
+- Nothing.
+
+### Removed
+
+- Nothing.
+
+### Fixed
+
+- [#1](https://github.com/zendframework/zend-expressive-session-ext/pull/1)
+  fixes a problem that occurs when a requested session does not resolve to an
+  existing session and/or an existing session with empty data, leading to
+  creation of new sessions on each request.
+
 ## 0.1.3 - 2018-02-24
 
 ### Added
