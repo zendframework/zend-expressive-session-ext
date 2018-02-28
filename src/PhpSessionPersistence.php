@@ -63,6 +63,9 @@ class PhpSessionPersistence implements SessionPersistenceInterface
         return $response;
     }
 
+    /**
+     * @param array $options Additional options to pass to `session_start()`.
+     */
     private function startSession(string $id, array $options = []) : void
     {
         session_id($id);
