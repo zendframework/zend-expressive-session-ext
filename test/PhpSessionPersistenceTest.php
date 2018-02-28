@@ -12,6 +12,7 @@ use Dflydev\FigCookies\FigRequestCookies;
 use Dflydev\FigCookies\FigResponseCookies;
 use Dflydev\FigCookies\SetCookie;
 use PHPUnit\Framework\TestCase;
+use Psr\Http\Message\ServerRequestInterface;
 use Zend\Diactoros\Response;
 use Zend\Diactoros\ServerRequest;
 use Zend\Expressive\Session\Ext\PhpSessionPersistence;
@@ -22,6 +23,11 @@ use Zend\Expressive\Session\Session;
  */
 class PhpSessionPersistenceTest extends TestCase
 {
+    /**
+     * @var PhpSessionPersistence
+     */
+    private $persistence;
+
     public function setUp()
     {
         $this->persistence = new PhpSessionPersistence();
@@ -56,6 +62,7 @@ class PhpSessionPersistenceTest extends TestCase
         $this->assertSame(PHP_SESSION_NONE, session_status());
         $sessionName = session_name();
 
+        /** @var ServerRequestInterface $request */
         $request = FigRequestCookies::set(
             new ServerRequest(),
             Cookie::create($sessionName, 'use-this-id')
@@ -68,33 +75,6 @@ class PhpSessionPersistenceTest extends TestCase
         $this->assertSame($_SESSION, $session->toArray());
         $id = session_id();
         $this->assertSame('use-this-id', $id);
-    }
-
-    public function testPersistSessionReturnsOriginalResposneIfSessionIsEmpty()
-    {
-        $this->startSession();
-        $session = new Session([]);
-        $response = new Response();
-
-        $returnedResponse = $this->persistence->persistSession($session, $response);
-        $this->assertSame($response, $returnedResponse);
-    }
-
-    public function testPersistSessionReturnsResponseWithSetCookieHeaderIfSessionHasContents()
-    {
-        $this->startSession();
-        $session = new Session(['foo' => 'bar']);
-        $response = new Response();
-
-        $returnedResponse = $this->persistence->persistSession($session, $response);
-        $this->assertNotSame($response, $returnedResponse);
-
-        $setCookie = FigResponseCookies::get($returnedResponse, session_name());
-        $this->assertInstanceOf(SetCookie::class, $setCookie);
-        $this->assertSame(session_id(), $setCookie->getValue());
-        $this->assertSame(ini_get('session.cookie_path'), $setCookie->getPath());
-
-        $this->assertSame($session->toArray(), $_SESSION);
     }
 
     public function testPersistSessionGeneratesCookieWithNewSessionIdIfSessionWasRegenerated()
@@ -114,6 +94,51 @@ class PhpSessionPersistenceTest extends TestCase
         $this->assertNotSame('original-id', $setCookie->getValue());
         $this->assertSame(session_id(), $setCookie->getValue());
 
+        $this->assertSame($session->toArray(), $_SESSION);
+    }
+
+    /**
+     * If Session COOKIE is present, persistSession() method must return the original Response
+     */
+    public function testPersistSessionReturnsOriginalResposneIfSessionCookiePresent()
+    {
+        $sessionName = session_name();
+
+        /** @var ServerRequestInterface $request */
+        $request = FigRequestCookies::set(
+            new ServerRequest(),
+            Cookie::create($sessionName, 'use-this-id')
+        );
+
+        $session = $this->persistence->initializeSessionFromRequest($request);
+        $response = new Response();
+        $returnedResponse = $this->persistence->persistSession($session, $response);
+        $this->assertSame($response, $returnedResponse);
+    }
+
+    /**
+     * If Session COOKIE is not present, persistSession() method must return Response with Set-Cookie header
+     */
+    public function testPersistSessionReturnsResponseWithSetCookieHeaderIfNoSessionCookiePresent()
+    {
+        $this->startSession();
+        $session = new Session([]);
+        $response = new Response();
+
+        $returnedResponse = $this->persistence->persistSession($session, $response);
+        $this->assertNotSame($response, $returnedResponse);
+
+        $setCookie = FigResponseCookies::get($returnedResponse, session_name());
+        $this->assertInstanceOf(SetCookie::class, $setCookie);
+        $this->assertSame(session_id(), $setCookie->getValue());
+        $this->assertSame(ini_get('session.cookie_path'), $setCookie->getPath());
+    }
+
+    public function testPersistSessionIfSessionHasContents()
+    {
+        $this->startSession();
+        $session = new Session(['foo' => 'bar']);
+        $this->persistence->persistSession($session, new Response);
         $this->assertSame($session->toArray(), $_SESSION);
     }
 }

@@ -31,9 +31,12 @@ use Zend\Expressive\Session\SessionPersistenceInterface;
  */
 class PhpSessionPersistence implements SessionPersistenceInterface
 {
+    private $cookie;
+
     public function initializeSessionFromRequest(ServerRequestInterface $request) : SessionInterface
     {
-        $id = FigRequestCookies::get($request, session_name())->getValue() ?: $this->generateSessionId();
+        $this->cookie = FigRequestCookies::get($request, session_name())->getValue();
+        $id = $this->cookie ?: $this->generateSessionId();
         $this->startSession($id);
         return new Session($_SESSION);
     }
@@ -47,24 +50,24 @@ class PhpSessionPersistence implements SessionPersistenceInterface
         $_SESSION = $session->toArray();
         session_write_close();
 
-        if (empty($_SESSION)) {
-            return $response;
+        if (empty($this->cookie)) {
+            $sessionCookie = SetCookie::create(session_name())
+                ->withValue(session_id())
+                ->withPath(ini_get('session.cookie_path'));
+
+            return FigResponseCookies::set($response, $sessionCookie);
         }
 
-        $sessionCookie = SetCookie::create(session_name())
-            ->withValue(session_id())
-            ->withPath(ini_get('session.cookie_path'));
-
-        return FigResponseCookies::set($response, $sessionCookie);
+        return $response;
     }
 
-    private function startSession(string $id) : void
+    private function startSession(string $id, array $options = []) : void
     {
         session_id($id);
-        session_start([
+        session_start(array_merge([
             'use_cookies'      => false,
             'use_only_cookies' => true,
-        ]);
+        ], $options));
     }
 
     /**
@@ -75,8 +78,9 @@ class PhpSessionPersistence implements SessionPersistenceInterface
     private function regenerateSession() : void
     {
         session_commit();
-        ini_set('session.use_strict_mode', 0);
-        $this->startSession($this->generateSessionId());
+        $this->startSession($this->generateSessionId(), [
+            'use_strict_mode' => false,
+        ]);
     }
 
     /**
