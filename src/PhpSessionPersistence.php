@@ -7,6 +7,7 @@
 
 namespace Zend\Expressive\Session\Ext;
 
+use Dflydev\FigCookies\FigCookies\Cookie;
 use Dflydev\FigCookies\FigRequestCookies;
 use Dflydev\FigCookies\FigResponseCookies;
 use Dflydev\FigCookies\SetCookie;
@@ -31,6 +32,7 @@ use Zend\Expressive\Session\SessionPersistenceInterface;
  */
 class PhpSessionPersistence implements SessionPersistenceInterface
 {
+    /** @var Cookie */
     private $cookie;
 
     public function initializeSessionFromRequest(ServerRequestInterface $request) : SessionInterface
