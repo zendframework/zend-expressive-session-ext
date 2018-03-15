@@ -2,7 +2,7 @@
 
 All notable changes to this project will be documented in this file, in reverse chronological order by release.
 
-## 1.0.1 - TBD
+## 1.0.1 - 2018-03-15
 
 ### Added
 
@@ -23,7 +23,7 @@ All notable changes to this project will be documented in this file, in reverse 
 ### Fixed
 
 - [#8](https://github.com/zendframework/zend-expressive-session-ext/pull/8)
-    Fixes handling of reset session not resetting the cookie.
+  fixes how session resets occur, ensuring cookies are reset correctly.
 
 ## 1.0.0 - 2018-03-15
 
