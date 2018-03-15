@@ -17,6 +17,16 @@ use Zend\Expressive\Session\Session;
 use Zend\Expressive\Session\SessionInterface;
 use Zend\Expressive\Session\SessionPersistenceInterface;
 
+use function array_merge;
+use function bin2hex;
+use function ini_get;
+use function random_bytes;
+use function session_commit;
+use function session_id;
+use function session_name;
+use function session_start;
+use function session_write_close;
+
 /**
  * Session persistence using ext-session.
  *
