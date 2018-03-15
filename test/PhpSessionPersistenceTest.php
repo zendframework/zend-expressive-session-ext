@@ -88,13 +88,22 @@ class PhpSessionPersistenceTest extends TestCase
 
     public function testPersistSessionGeneratesCookieWithNewSessionIdIfSessionWasRegenerated()
     {
-        $this->startSession('original-id');
+        $sessionName = 'regenerated-session';
+        session_name($sessionName);
+        /** @var ServerRequestInterface $request */
+        $request = FigRequestCookies::set(
+            new ServerRequest(),
+            Cookie::create($sessionName, 'use-this-id')
+        );
 
-        $session = new Session(['foo' => 'bar']);
+        // first request of original session cookie
+        $session = $this->persistence->initializeSessionFromRequest($request);
+        $response = new Response();
+        $this->persistence->persistSession($session, $response);
+
         $session = $session->regenerate();
 
-        $response = new Response();
-
+        // emulate second request that would usually occur once session has been regenerated
         $returnedResponse = $this->persistence->persistSession($session, $response);
         $this->assertNotSame($response, $returnedResponse);
 
