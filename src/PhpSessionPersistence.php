@@ -62,7 +62,7 @@ class PhpSessionPersistence implements SessionPersistenceInterface
         $_SESSION = $session->toArray();
         session_write_close();
 
-        if (empty($this->cookie)) {
+        if ($this->cookie === null) {
             $sessionCookie = SetCookie::create(session_name())
                 ->withValue(session_id())
                 ->withPath(ini_get('session.cookie_path'));
@@ -93,6 +93,7 @@ class PhpSessionPersistence implements SessionPersistenceInterface
     private function regenerateSession() : void
     {
         session_commit();
+        $this->cookie = null;
         $this->startSession($this->generateSessionId(), [
             'use_strict_mode' => false,
         ]);
