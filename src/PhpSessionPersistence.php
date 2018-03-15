@@ -93,6 +93,7 @@ class PhpSessionPersistence implements SessionPersistenceInterface
     private function regenerateSession() : void
     {
         session_commit();
+        $this->cookie = null;
         $this->startSession($this->generateSessionId(), [
             'use_strict_mode' => false,
         ]);
