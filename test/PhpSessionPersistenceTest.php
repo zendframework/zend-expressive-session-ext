@@ -18,6 +18,15 @@ use Zend\Diactoros\ServerRequest;
 use Zend\Expressive\Session\Ext\PhpSessionPersistence;
 use Zend\Expressive\Session\Session;
 
+use function ini_get;
+use function session_id;
+use function session_name;
+use function session_start;
+use function session_status;
+
+use const PHP_SESSION_ACTIVE;
+use const PHP_SESSION_NONE;
+
 /**
  * @runTestsInSeparateProcesses
  */
