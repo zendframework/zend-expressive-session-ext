@@ -62,7 +62,7 @@ class PhpSessionPersistence implements SessionPersistenceInterface
         $_SESSION = $session->toArray();
         session_write_close();
 
-        if ($this->cookie === null) {
+        if (empty($this->cookie)) {
             $sessionCookie = SetCookie::create(session_name())
                 ->withValue(session_id())
                 ->withPath(ini_get('session.cookie_path'));
