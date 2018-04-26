@@ -196,9 +196,6 @@ class PhpSessionPersistenceTest extends TestCase
         $response = $persistence->persistSession($session, new Response());
         $expiresMax = time() + $maxAge;
 
-        $expiresMin = time() + $maxAge - 1;
-        $expiresMax = time() + $maxAge + 1;
-
         $control = sprintf('public, max-age=%d', $maxAge);
         $expires = $response->getHeaderLine('Expires');
         $expires = strtotime($expires);
