@@ -263,9 +263,9 @@ class PhpSessionPersistenceTest extends TestCase
         $session  = new Session(['foo' => 'bar']);
         $response = $persistence->persistSession($session, $response);
 
-        $this->assertSame($response->getHeaderLine('Pragma'), '');
-        $this->assertSame($response->getHeaderLine('Expires'), '');
-        $this->assertSame($response->getHeaderLine('Cache-Control'), '');
+        $this->assertFalse($response->hasHeader('Pragma'));
+        $this->assertFalse($response->hasHeader('Expires'));
+        $this->assertFalse($response->hasHeader('Cache-Control'));
     }
 
     public function testPersistSessionReturnsExpectedResponseWithLastModifiedHeader()
@@ -316,6 +316,22 @@ class PhpSessionPersistenceTest extends TestCase
     {
         $this->startSession(null, [
             'cache_limiter' => '',
+        ]);
+
+        $persistence = new PhpSessionPersistence();
+
+        $session  = new Session(['foo' => 'bar']);
+        $response = $persistence->persistSession($session, new Response());
+
+        $this->assertFalse($response->hasHeader('Pragma'));
+        $this->assertFalse($response->hasHeader('Expires'));
+        $this->assertFalse($response->hasHeader('Cache-Control'));
+    }
+
+    public function testPersistSessionReturnsExpectedResponseWithoutAddedCacheHeadersIfUnsupportedCacheLimiter()
+    {
+        $this->startSession(null, [
+            'cache_limiter' => 'unsupported',
         ]);
 
         $persistence = new PhpSessionPersistence();
