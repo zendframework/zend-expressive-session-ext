@@ -178,7 +178,8 @@ class PhpSessionPersistence implements SessionPersistenceInterface
             return [];
         }
 
-        $lastModified = $this->getLastModified();
+        $script = $_SERVER['SCRIPT_FILENAME'] ?? '';
+        $lastModified = $this->getLastModified($script);
         if ($lastModified) {
             $headers['Last-Modified'] = $lastModified;
         }
@@ -189,11 +190,14 @@ class PhpSessionPersistence implements SessionPersistenceInterface
     /**
      * Return the Last-Modified header line based on script name mtime
      * @return string|null
+     * @return string|null
      */
-    private function getLastModified()
+    private function getLastModified(string $filename) : ?string
     {
-        if (isset($_SERVER['SCRIPT_FILENAME'])) {
-            $mtime = @filemtime($_SERVER['SCRIPT_FILENAME']);
+        if ($filename
+            && is_file($filename)
+        ) {
+            $mtime = @filemtime($filename);
             if (false === $mtime) {
                 return null;
             }
@@ -208,7 +212,7 @@ class PhpSessionPersistence implements SessionPersistenceInterface
      * @param ResponseInterface $response
      * @return bool
      */
-    private function responseAlreadyHasCacheHeaders(ResponseInterface $response)
+    private function responseAlreadyHasCacheHeaders(ResponseInterface $response) : bool
     {
         return (
                $response->hasHeader('Expires')
