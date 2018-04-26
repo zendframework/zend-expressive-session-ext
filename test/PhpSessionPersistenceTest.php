@@ -19,12 +19,12 @@ use Zend\Expressive\Session\Ext\PhpSessionPersistence;
 use Zend\Expressive\Session\Session;
 
 use function ini_get;
+use function gmdate;
 use function session_id;
 use function session_name;
 use function session_start;
 use function session_status;
 use function time;
-use function gmdate;
 
 use const PHP_SESSION_ACTIVE;
 use const PHP_SESSION_NONE;
@@ -200,8 +200,8 @@ class PhpSessionPersistenceTest extends TestCase
         $expires = $response->getHeaderLine('Expires');
         $expires = strtotime($expires);
 
-        $this->assertTrue($expires >= $expiresMin);
-        $this->assertTrue($expires <= $expiresMax);
+        $this->assertGreaterThanOrEqual($expires, $expiresMin);
+        $this->assertLessThanOrEqual($expires, $expiresMax);
         $this->assertSame($response->getHeaderLine('Cache-Control'), $control);
     }
 
@@ -268,48 +268,68 @@ class PhpSessionPersistenceTest extends TestCase
         $this->assertFalse($response->hasHeader('Cache-Control'));
     }
 
-    public function testPersistSessionReturnsExpectedResponseWithLastModifiedHeader()
+    public function testPersistSessionInjectsExpectedLastModifiedHeaderIfScriptFilenameProvided()
     {
-        $this->startSession(null, [
-            'cache_limiter' => 'public',
-        ]);
-
-        // temporarily set SCRIPT_FILENAME to current file for testing
-        $scriptFilename = $_SERVER['SCRIPT_FILENAME'] ?? null;
-        $_SERVER['SCRIPT_FILENAME'] = __FILE__;
+        // temporarily set session.cache_limiter to 'public'
+        $ini = ini_get('session.cache_limiter');
+        ini_set('session.cache_limiter', 'public');
 
         $persistence = new PhpSessionPersistence();
 
-        $session  = new Session(['foo' => 'bar']);
+        // mocked request with script file set to current file
+        $request  = new ServerRequest(['SCRIPT_FILENAME' => __FILE__]);
+        $session  = $persistence->initializeSessionFromRequest($request);
         $response = $persistence->persistSession($session, new Response());
-
-        // restore original value
-        $_SERVER['SCRIPT_FILENAME'] = $scriptFilename;
 
         $lastModified = gmdate(PhpSessionPersistence::HTTP_DATE_FORMAT, filemtime(__FILE__));
 
         $this->assertSame($response->getHeaderLine('Last-Modified'), $lastModified);
+
+        // restore original ini setting
+        ini_set('session.cache_limiter', $ini);
     }
 
-    public function testPersistSessionReturnsExpectedResponseWithoutLastModifiedHeaderIfUnableToDetermineFileMtime()
+    public function testPersistSessionInjectsExpectedLastModifiedHeaderWithClassFileMtimeIfNoScriptFilenameProvided()
     {
-        $this->startSession(null, [
-            'cache_limiter' => 'public',
-        ]);
-
-        // temporarily set SCRIPT_FILENAME to empty string to emulate failure
-        $scriptFilename = $_SERVER['SCRIPT_FILENAME'] ?? null;
-        $_SERVER['SCRIPT_FILENAME'] = '';
+        // temporarily set session.cache_limiter to 'public'
+        $ini = ini_get('session.cache_limiter');
+        ini_set('session.cache_limiter', 'public');
 
         $persistence = new PhpSessionPersistence();
 
-        $session  = new Session(['foo' => 'bar']);
+        // mocked request without script file
+        $request  = new ServerRequest();
+        $session  = $persistence->initializeSessionFromRequest($request);
         $response = $persistence->persistSession($session, new Response());
 
-        // restore original value
-        $_SERVER['SCRIPT_FILENAME'] = $scriptFilename;
+        $reflection = new \ReflectionClass($persistence);
+        $classFile  = $reflection->getFileName();
+
+        $lastModified = gmdate(PhpSessionPersistence::HTTP_DATE_FORMAT, filemtime($classFile));
+
+        $this->assertSame($response->getHeaderLine('Last-Modified'), $lastModified);
+
+        // restore original ini setting
+        ini_set('session.cache_limiter', $ini);
+    }
+
+    public function testPersistSessionDoesNotInjectLastModifiedHeaderIfUnableToDetermineFileMtime()
+    {
+        // temporarily set session.cache_limiter to 'public'
+        $ini = ini_get('session.cache_limiter');
+        ini_set('session.cache_limiter', 'public');
+
+        $persistence = new PhpSessionPersistence();
+
+        // mocked request with non-existing script file
+        $request  = new ServerRequest(['SCRIPT_FILENAME' => 'n0n3x15t3nt!']);
+        $session  = $persistence->initializeSessionFromRequest($request);
+        $response = $persistence->persistSession($session, new Response());
 
         $this->assertFalse($response->hasHeader('Last-Modified'));
+
+        // restore original ini setting
+        ini_set('session.cache_limiter', $ini);
     }
 
     public function testPersistSessionReturnsExpectedResponseWithoutAddedCacheHeadersIfEmptyCacheLimiter()
