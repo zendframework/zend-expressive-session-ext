@@ -140,15 +140,11 @@ class PhpSessionPersistence implements SessionPersistenceInterface
 
     /**
      * Generate cache headers for a given session cache_limiter value.
-     * @param string|null $cacheLimiter
+     * @param string $cacheLimiter
      * @param int $cacheExpire
      */
-    private function generateCacheHeaders(string $cacheLimiter = null, int $cacheExpire = 0) : array
+    private function generateCacheHeaders(string $cacheLimiter, int $cacheExpire = 0) : array
     {
-        if (! $cacheLimiter) {
-            return [];
-        }
-
         if ($cacheLimiter === 'nocache') {
             return [
                 'Expires'       => self::CACHE_PAST_DATE,
