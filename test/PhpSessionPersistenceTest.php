@@ -268,6 +268,29 @@ class PhpSessionPersistenceTest extends TestCase
         $this->assertSame($response->getHeaderLine('Cache-Control'), '');
     }
 
+    public function testPersistSessionReturnsExpectedResponseWithLastModifiedHeader()
+    {
+        $this->startSession(null, [
+            'cache_limiter' => 'public',
+        ]);
+
+        // temporarily set SCRIPT_FILENAME to current file for testing
+        $scriptFilename = $_SERVER['SCRIPT_FILENAME'] ?? null;
+        $_SERVER['SCRIPT_FILENAME'] = __FILE__;
+
+        $persistence = new PhpSessionPersistence();
+
+        $session  = new Session(['foo' => 'bar']);
+        $response = $persistence->persistSession($session, new Response());
+
+        // restore original value
+        $_SERVER['SCRIPT_FILENAME'] = $scriptFilename;
+
+        $lastModified = gmdate(PhpSessionPersistence::HTTP_DATE_FORMAT, filemtime(__FILE__));
+
+        $this->assertSame($response->getHeaderLine('Last-Modified'), $lastModified);
+    }
+
     public function testPersistSessionReturnsExpectedResponseWithoutAddedCacheHeadersIfEmptyCacheLimiter()
     {
         $this->startSession(null, [
