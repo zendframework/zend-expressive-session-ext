@@ -156,7 +156,7 @@ class PhpSessionPersistence implements SessionPersistenceInterface
     private function generateCacheHeaders(string $cacheLimiter, int $cacheExpire = 0) : array
     {
         // Unsupported cache_limiter
-        if (!isset(self::$supported_cache_limiters[$cacheLimiter])) {
+        if (! isset(self::$supported_cache_limiters[$cacheLimiter])) {
             return [];
         }
 
