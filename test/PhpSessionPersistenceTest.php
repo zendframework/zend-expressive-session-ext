@@ -267,4 +267,20 @@ class PhpSessionPersistenceTest extends TestCase
         $this->assertSame($response->getHeaderLine('Expires'), '');
         $this->assertSame($response->getHeaderLine('Cache-Control'), '');
     }
+
+    public function testPersistSessionReturnsExpectedResponseWithoutAddedCacheHeadersIfEmptyCacheLimiter()
+    {
+        $this->startSession(null, [
+            'cache_limiter' => '',
+        ]);
+
+        $persistence = new PhpSessionPersistence();
+
+        $session  = new Session(['foo' => 'bar']);
+        $response = $persistence->persistSession($session, new Response());
+
+        $this->assertSame($response->getHeaderLine('Pragma'), '');
+        $this->assertSame($response->getHeaderLine('Expires'), '');
+        $this->assertSame($response->getHeaderLine('Cache-Control'), '');
+    }
 }
