@@ -194,14 +194,8 @@ class PhpSessionPersistence implements SessionPersistenceInterface
      */
     private function getLastModified(string $filename) : ?string
     {
-        if ($filename
-            && is_file($filename)
-        ) {
-            $mtime = @filemtime($filename);
-            if (false === $mtime) {
-                return null;
-            }
-            return gmdate(self::HTTP_DATE_FORMAT, $mtime);
+        if ($filename && is_file($filename)) {
+            return gmdate(self::HTTP_DATE_FORMAT, filemtime($filename));
         }
 
         return null;
