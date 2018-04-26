@@ -91,7 +91,7 @@ class PhpSessionPersistence implements SessionPersistenceInterface
                 if ($this->responseAlreadyHasCacheHeaders($response)) {
                     return $response;
                 }
-                $cacheHeaders = $this->generateCacheHeaders($this->cacheLimiter);
+                $cacheHeaders = $this->generateCacheHeaders($this->cacheLimiter, $this->cacheExpire);
                 foreach ($cacheHeaders as $name => $value) {
                     $response = $response->withHeader($name, $value);
                 }
@@ -141,8 +141,9 @@ class PhpSessionPersistence implements SessionPersistenceInterface
     /**
      * Generate cache headers for a given session cache_limiter value.
      * @param string|null $cacheLimiter
+     * @param int $cacheExpire
      */
-    private function generateCacheHeaders(string $cacheLimiter = null) : array
+    private function generateCacheHeaders(string $cacheLimiter = null, int $cacheExpire = 0) : array
     {
         if (! $cacheLimiter) {
             return [];
@@ -157,7 +158,7 @@ class PhpSessionPersistence implements SessionPersistenceInterface
         }
 
         $headers = [];
-        $maxAge  = 60 * $this->cacheExpire;
+        $maxAge  = 60 * $cacheExpire;
 
         if ($cacheLimiter === 'public') {
             $headers = [
