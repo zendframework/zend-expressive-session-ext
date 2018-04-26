@@ -54,6 +54,14 @@ class PhpSessionPersistence implements SessionPersistenceInterface
     /** @var int */
     private $cacheExpire;
 
+    /** @var array */
+    private static $supported_cache_limiters = [
+        'nocache'           => true,
+        'public'            => true,
+        'private'           => true,
+        'private_no_expire' => true,
+    ];
+
     public const CACHE_PAST_DATE  = 'Thu, 19 Nov 1981 08:52:00 GMT';
     public const HTTP_DATE_FORMAT = 'D, d M Y H:i:s T';
 
@@ -93,7 +101,9 @@ class PhpSessionPersistence implements SessionPersistenceInterface
                 }
                 $cacheHeaders = $this->generateCacheHeaders($this->cacheLimiter, $this->cacheExpire);
                 foreach ($cacheHeaders as $name => $value) {
-                    $response = $response->withHeader($name, $value);
+                    if (false !== $value) {
+                        $response = $response->withHeader($name, $value);
+                    }
                 }
             }
 
@@ -145,7 +155,13 @@ class PhpSessionPersistence implements SessionPersistenceInterface
      */
     private function generateCacheHeaders(string $cacheLimiter, int $cacheExpire = 0) : array
     {
-        if ($cacheLimiter === 'nocache') {
+        // Unsupported cache_limiter
+        if (!isset(self::$supported_cache_limiters[$cacheLimiter])) {
+            return [];
+        }
+
+        // cache_limiter: 'nocache'
+        if ('nocache' === $cacheLimiter) {
             return [
                 'Expires'       => self::CACHE_PAST_DATE,
                 'Cache-Control' => 'no-store, no-cache, must-revalidate',
@@ -153,48 +169,46 @@ class PhpSessionPersistence implements SessionPersistenceInterface
             ];
         }
 
-        $headers = [];
-        $maxAge  = 60 * $cacheExpire;
+        $maxAge       = 60 * $cacheExpire;
+        $lastModified = $this->getLastModified($_SERVER['SCRIPT_FILENAME'] ?? '');
 
-        if ($cacheLimiter === 'public') {
-            $headers = [
+        // cache_limiter: 'public'
+        if ('public' === $cacheLimiter) {
+            return [
                 'Expires'       => gmdate(self::HTTP_DATE_FORMAT, time() + $maxAge),
                 'Cache-Control' => sprintf('public, max-age=%d', $maxAge),
+                'Last-Modified' => $lastModified,
             ];
-        } elseif ($cacheLimiter === 'private') {
-            $headers = [
+        }
+
+        // cache_limiter: 'private'
+        if ('private' === $cacheLimiter) {
+            return [
                 'Expires'       => self::CACHE_PAST_DATE,
                 'Cache-Control' => sprintf('private, max-age=%d', $maxAge),
+                'Last-Modified' => $lastModified,
             ];
-        } elseif ($cacheLimiter === 'private_no_expire') {
-            $headers = [
-                'Cache-Control' => sprintf('private, max-age=%d', $maxAge),
-            ];
-        } else {
-            return [];
         }
 
-        $script = $_SERVER['SCRIPT_FILENAME'] ?? '';
-        $lastModified = $this->getLastModified($script);
-        if ($lastModified) {
-            $headers['Last-Modified'] = $lastModified;
-        }
-
-        return $headers;
+        // last possible case, cache_limiter = 'private_no_expire'
+        return [
+            'Cache-Control' => sprintf('private, max-age=%d', $maxAge),
+            'Last-Modified' => $lastModified,
+        ];
     }
 
     /**
      * Return the Last-Modified header line based on script name mtime
-     * @return string|null
-     * @return string|null
+     * @return string
+     * @return string|false
      */
-    private function getLastModified(string $filename) : ?string
+    private function getLastModified(string $filename)
     {
         if ($filename && is_file($filename)) {
             return gmdate(self::HTTP_DATE_FORMAT, filemtime($filename));
         }
 
-        return null;
+        return false;
     }
 
     /**
