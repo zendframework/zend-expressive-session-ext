@@ -217,7 +217,6 @@ class PhpSessionPersistence implements SessionPersistenceInterface
      * Return the Last-Modified header line based on the request's script file
      * modified time. If no script file could be derived from the request we use
      * this class file modification time as fallback.
-     * 
      * @return string|false
      */
     private function getLastModified()
