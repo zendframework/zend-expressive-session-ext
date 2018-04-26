@@ -25,6 +25,10 @@ use function session_id;
 use function session_name;
 use function session_start;
 use function session_write_close;
+use function sprintf;
+use function gmdate;
+use function time;
+use function filemtime;
 
 /**
  * Session persistence using ext-session.
@@ -43,6 +47,21 @@ class PhpSessionPersistence implements SessionPersistenceInterface
 {
     /** @var Cookie */
     private $cookie;
+
+    /** @var string */
+    private $cacheLimiter;
+
+    /** @var int */
+    private $cacheExpire;
+
+    public const CACHE_PAST_DATE  = 'Thu, 19 Nov 1981 08:52:00 GMT';
+    public const HTTP_DATE_FORMAT = 'D, d M Y H:i:s T';
+
+    public function __construct()
+    {
+        $this->cacheLimiter = ini_get('session.cache_limiter');
+        $this->cacheExpire  = (int) ini_get('session.cache_expire');
+    }
 
     public function initializeSessionFromRequest(ServerRequestInterface $request) : SessionInterface
     {
@@ -66,7 +85,19 @@ class PhpSessionPersistence implements SessionPersistenceInterface
                 ->withValue(session_id())
                 ->withPath(ini_get('session.cookie_path'));
 
-            return FigResponseCookies::set($response, $sessionCookie);
+            $response = FigResponseCookies::set($response, $sessionCookie);
+
+            if ($this->cacheLimiter) {
+                if ($this->responseAlreadyHasCacheHeaders($response)) {
+                    return $response;
+                }
+                $cacheHeaders = $this->generateCacheHeaders($this->cacheLimiter);
+                foreach ($cacheHeaders as $name => $value) {
+                    $response = $response->withHeader($name, $value);
+                }
+            }
+
+            return $response;
         }
 
         return $response;
@@ -81,6 +112,7 @@ class PhpSessionPersistence implements SessionPersistenceInterface
         session_start(array_merge([
             'use_cookies'      => false,
             'use_only_cookies' => true,
+            'cache_limiter'    => '',
         ], $options));
     }
 
@@ -104,5 +136,84 @@ class PhpSessionPersistence implements SessionPersistenceInterface
     private function generateSessionId() : string
     {
         return bin2hex(random_bytes(16));
+    }
+
+    /**
+     * Generate cache headers for a given session cache_limiter value.
+     * @param string|null $cacheLimiter
+     */
+    private function generateCacheHeaders(string $cacheLimiter = null) : array
+    {
+        if (!$cacheLimiter) {
+            return [];
+        }
+
+        if ($cacheLimiter === 'nocache') {
+            return [
+                'Expires'       => self::CACHE_PAST_DATE,
+                'Cache-Control' => 'no-store, no-cache, must-revalidate',
+                'Pragma'        => 'no-cache',
+            ];
+        }
+
+        $headers = [];
+        $maxAge  = 60 * $this->cacheExpire;
+
+        if ($cacheLimiter === 'public') {
+            $headers = [
+                'Expires'       => gmdate(self::HTTP_DATE_FORMAT, time() + $maxAge),
+                'Cache-Control' => sprintf('public, max-age=%d', $maxAge),
+            ];
+        } elseif ($cacheLimiter === 'private') {
+            $headers = [
+                'Expires'       => self::CACHE_PAST_DATE,
+                'Cache-Control' => sprintf('private, max-age=%d', $maxAge),
+            ];
+        } elseif ($cacheLimiter === 'private_no_expire') {
+            $headers = [
+                'Cache-Control' => sprintf('private, max-age=%d', $maxAge),
+            ];
+        } else {
+            return [];
+        }
+
+        $lastModified = $this->getLastModified();
+        if ($lastModified) {
+            $headers['Last-Modified'] = $lastModified;
+        }
+
+        return $headers;
+    }
+
+    /**
+     * Return the Last-Modified header line based on script name mtime
+     * @return string|null
+     */
+    private function getLastModified()
+    {
+        if (isset($_SERVER['SCRIPT_FILENAME'])) {
+            $mtime = @filemtime($_SERVER['SCRIPT_FILENAME']);
+            if (false === $mtime) {
+                return null;
+            }
+            return gmdate(self::HTTP_DATE_FORMAT, $mtime);
+        }
+
+        return null;
+    }
+
+    /**
+     * Check if the response already carries cache headers
+     * @param ResponseInterface $response
+     * @return bool
+     */
+    private function responseAlreadyHasCacheHeaders(ResponseInterface $response)
+    {
+        return (
+               $response->hasHeader('Expires')
+            || $response->hasHeader('Last-Modified')
+            || $response->hasHeader('Cache-Control')
+            || $response->hasHeader('Pragma')
+        );
     }
 }
