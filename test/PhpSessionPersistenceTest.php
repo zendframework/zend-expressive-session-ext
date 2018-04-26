@@ -23,6 +23,8 @@ use function session_id;
 use function session_name;
 use function session_start;
 use function session_status;
+use function time;
+use function gmdate;
 
 use const PHP_SESSION_ACTIVE;
 use const PHP_SESSION_NONE;
@@ -42,14 +44,14 @@ class PhpSessionPersistenceTest extends TestCase
         $this->persistence = new PhpSessionPersistence();
     }
 
-    public function startSession(string $id = null)
+    public function startSession(string $id = null, array $options = [])
     {
         $id = $id ?: 'testing';
         session_id($id);
         session_start([
             'use_cookies'      => false,
             'use_only_cookies' => true,
-        ]);
+        ] + $options);
     }
 
     public function testInitializeSessionFromRequestInitializesSessionWithGeneratedIdentifierIfNoSessionCookiePresent()
@@ -158,5 +160,114 @@ class PhpSessionPersistenceTest extends TestCase
         $session = new Session(['foo' => 'bar']);
         $this->persistence->persistSession($session, new Response);
         $this->assertSame($session->toArray(), $_SESSION);
+    }
+
+    public function testPersistSessionReturnsExpectedResponseWithCacheHeadersIfCacheLimiterIsNocache()
+    {
+        $this->startSession(null, [
+            'cache_limiter' => 'nocache',
+        ]);
+
+        $persistence = new PhpSessionPersistence();
+
+        $session  = new Session(['foo' => 'bar']);
+        $response = $persistence->persistSession($session, new Response());
+
+        $this->assertSame($response->getHeaderLine('Expires'), PhpSessionPersistence::CACHE_PAST_DATE);
+        $this->assertSame($response->getHeaderLine('Cache-Control'), 'no-store, no-cache, must-revalidate');
+        $this->assertSame($response->getHeaderLine('Pragma'), 'no-cache');
+    }
+
+    public function testPersistSessionReturnsExpectedResponseWithCacheHeadersIfCacheLimiterIsPublic()
+    {
+        $expire = 111;
+        $maxAge = 60 * $expire;
+
+        $this->startSession(null, [
+            'cache_limiter' => 'public',
+            'cache_expire'  => $expire,
+        ]);
+
+        $persistence = new PhpSessionPersistence();
+
+        $session  = new Session(['foo' => 'bar']);
+
+        $expiresMin = time() + $maxAge;
+        $response = $persistence->persistSession($session, new Response());
+        $expiresMax = time() + $maxAge;
+
+        $expiresMin = time() + $maxAge - 1;
+        $expiresMax = time() + $maxAge + 1;
+
+        $control = sprintf('public, max-age=%d', $maxAge);
+        $expires = $response->getHeaderLine('Expires');
+        $expires = strtotime($expires);
+
+        $this->assertTrue($expires >= $expiresMin);
+        $this->assertTrue($expires <= $expiresMax);
+        $this->assertSame($response->getHeaderLine('Cache-Control'), $control);
+    }
+
+    public function testPersistSessionReturnsExpectedResponseWithCacheHeadersIfCacheLimiterIsPrivate()
+    {
+        $expire = 222;
+        $maxAge = 60 * $expire;
+
+        $this->startSession(null, [
+            'cache_limiter' => 'private',
+            'cache_expire'  => $expire,
+        ]);
+
+        $persistence = new PhpSessionPersistence();
+
+        $session  = new Session(['foo' => 'bar']);
+        $response = $persistence->persistSession($session, new Response());
+
+        $expires = PhpSessionPersistence::CACHE_PAST_DATE;
+        $control = sprintf('private, max-age=%d', $maxAge);
+
+        $this->assertSame($response->getHeaderLine('Expires'), $expires);
+        $this->assertSame($response->getHeaderLine('Cache-Control'), $control);
+    }
+
+    public function testPersistSessionReturnsExpectedResponseWithCacheHeadersIfCacheLimiterIsPrivateNoExpire()
+    {
+        $expire = 333;
+        $maxAge = 60 * $expire;
+
+        $this->startSession(null, [
+            'cache_limiter' => 'private_no_expire',
+            'cache_expire'  => $expire,
+        ]);
+
+        $persistence = new PhpSessionPersistence();
+
+        $session  = new Session(['foo' => 'bar']);
+        $response = $persistence->persistSession($session, new Response());
+
+        $control = sprintf('private, max-age=%d', $maxAge);
+
+        $this->assertSame($response->getHeaderLine('Expires'), '');
+        $this->assertSame($response->getHeaderLine('Cache-Control'), $control);
+    }
+
+    public function testPersistSessionReturnsExpectedResponseWithoutAddedHeadersIfAlreadyHasAny()
+    {
+        $this->startSession(null, [
+            'cache_limiter' => 'nocache',
+        ]);
+
+        $persistence = new PhpSessionPersistence();
+
+        $response = new Response('php://memory', 200, [
+            'Last-Modified' => gmdate(PhpSessionPersistence::HTTP_DATE_FORMAT),
+        ]);
+
+        $session  = new Session(['foo' => 'bar']);
+        $response = $persistence->persistSession($session, $response);
+
+        $this->assertSame($response->getHeaderLine('Pragma'), '');
+        $this->assertSame($response->getHeaderLine('Expires'), '');
+        $this->assertSame($response->getHeaderLine('Cache-Control'), '');
     }
 }
