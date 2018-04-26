@@ -45,7 +45,8 @@ All notable changes to this project will be documented in this file, in reverse 
 
 ### Fixed
 
-- Nothing.
+- [#13](https://github.com/zendframework/zend-expressive-session-ext/pull/13) fixes an issue whereby a new session cookie is not always sent
+  following an ID regeneration.
 
 ## 1.0.1 - 2018-03-15
 
