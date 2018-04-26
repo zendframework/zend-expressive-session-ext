@@ -186,7 +186,7 @@ class PhpSessionPersistence implements SessionPersistenceInterface
         }
 
         $maxAge       = 60 * $this->cacheExpire;
-        $lastModified = $this->getLastModified($_SERVER['SCRIPT_FILENAME'] ?? '');
+        $lastModified = $this->getLastModified();
 
         // cache_limiter: 'public'
         if ('public' === $this->cacheLimiter) {
