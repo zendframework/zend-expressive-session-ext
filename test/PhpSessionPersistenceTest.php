@@ -291,6 +291,27 @@ class PhpSessionPersistenceTest extends TestCase
         $this->assertSame($response->getHeaderLine('Last-Modified'), $lastModified);
     }
 
+    public function testPersistSessionReturnsExpectedResponseWithoutLastModifiedHeaderIfUnableToDetermineFileMtime()
+    {
+        $this->startSession(null, [
+            'cache_limiter' => 'public',
+        ]);
+
+        // temporarily set SCRIPT_FILENAME to empty string to emulate failure
+        $scriptFilename = $_SERVER['SCRIPT_FILENAME'] ?? null;
+        $_SERVER['SCRIPT_FILENAME'] = '';
+
+        $persistence = new PhpSessionPersistence();
+
+        $session  = new Session(['foo' => 'bar']);
+        $response = $persistence->persistSession($session, new Response());
+
+        // restore original value
+        $_SERVER['SCRIPT_FILENAME'] = $scriptFilename;
+
+        $this->assertFalse($response->hasHeader('Last-Modified'));
+    }
+
     public function testPersistSessionReturnsExpectedResponseWithoutAddedCacheHeadersIfEmptyCacheLimiter()
     {
         $this->startSession(null, [
@@ -302,8 +323,8 @@ class PhpSessionPersistenceTest extends TestCase
         $session  = new Session(['foo' => 'bar']);
         $response = $persistence->persistSession($session, new Response());
 
-        $this->assertSame($response->getHeaderLine('Pragma'), '');
-        $this->assertSame($response->getHeaderLine('Expires'), '');
-        $this->assertSame($response->getHeaderLine('Cache-Control'), '');
+        $this->assertFalse($response->hasHeader('Pragma'));
+        $this->assertFalse($response->hasHeader('Expires'));
+        $this->assertFalse($response->hasHeader('Cache-Control'));
     }
 }
