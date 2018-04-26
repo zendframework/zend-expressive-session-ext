@@ -116,7 +116,7 @@ class PhpSessionPersistenceTest extends TestCase
     }
 
     /**
-     * If Session COOKIE is present, persistSession() method must return the original Response
+     * If Session COOKIE is present, persistSession() method must return Response with Set-Cookie header
      */
     public function testPersistSessionReturnsOriginalResposneIfSessionCookiePresent()
     {
@@ -131,11 +131,16 @@ class PhpSessionPersistenceTest extends TestCase
         $session = $this->persistence->initializeSessionFromRequest($request);
         $response = new Response();
         $returnedResponse = $this->persistence->persistSession($session, $response);
-        $this->assertSame($response, $returnedResponse);
+        $this->assertNotSame($response, $returnedResponse);
+
+        $setCookie = FigResponseCookies::get($returnedResponse, session_name());
+        $this->assertInstanceOf(SetCookie::class, $setCookie);
+        $this->assertSame(session_id(), $setCookie->getValue());
+        $this->assertSame(ini_get('session.cookie_path'), $setCookie->getPath());
     }
 
     /**
-     * If Session COOKIE is not present, persistSession() method must return Response with Set-Cookie header
+     * If Session COOKIE is not present, persistSession() method must return the original Response
      */
     public function testPersistSessionReturnsResponseWithSetCookieHeaderIfNoSessionCookiePresent()
     {
@@ -144,12 +149,7 @@ class PhpSessionPersistenceTest extends TestCase
         $response = new Response();
 
         $returnedResponse = $this->persistence->persistSession($session, $response);
-        $this->assertNotSame($response, $returnedResponse);
-
-        $setCookie = FigResponseCookies::get($returnedResponse, session_name());
-        $this->assertInstanceOf(SetCookie::class, $setCookie);
-        $this->assertSame(session_id(), $setCookie->getValue());
-        $this->assertSame(ini_get('session.cookie_path'), $setCookie->getPath());
+        $this->assertSame($response, $returnedResponse);
     }
 
     public function testPersistSessionIfSessionHasContents()
