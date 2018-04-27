@@ -68,6 +68,32 @@ class PhpSessionPersistenceTest extends TestCase
         );
     }
 
+    /**
+     * @param array $options Custom session options (without the "session" namespace)
+     * @return array Return the original (and overwritten) namespaced ini settings
+     */
+    private function applyCustomSessionOptions(array $options)
+    {
+        $ini = [];
+        foreach ($options as $key => $value) {
+            $ini_key = "session.{$key}";
+            $ini[$ini_key] = ini_get($ini_key);
+            ini_set($ini_key, strval(is_bool($value) ? intval($value) : $value));
+        }
+
+        return $ini;
+    }
+
+    /**
+     * @param array $ini The original session namespaced ini settings
+     */
+    private function restoreOriginalSessionIniSettings(array $ini)
+    {
+        foreach ($ini as $key => $value) {
+            ini_set($key, $value);
+        }
+    }
+
     public function testInitializeSessionFromRequestInitializesSessionWithGeneratedIdentifierIfNoSessionCookiePresent()
     {
         $this->assertSame(PHP_SESSION_NONE, session_status());
@@ -178,8 +204,9 @@ class PhpSessionPersistenceTest extends TestCase
 
     public function testPersistSessionReturnsExpectedResponseWithCacheHeadersIfCacheLimiterIsNocache()
     {
-        $ini = ini_get('session.cache_limiter');
-        ini_set('session.cache_limiter', 'nocache');
+        $ini = $this->applyCustomSessionOptions([
+            'cache_limiter' => 'nocache',
+        ]);
 
         $persistence = new PhpSessionPersistence();
 
@@ -191,7 +218,7 @@ class PhpSessionPersistenceTest extends TestCase
         $this->assertSame($response->getHeaderLine('Cache-Control'), 'no-store, no-cache, must-revalidate');
         $this->assertSame($response->getHeaderLine('Pragma'), 'no-cache');
 
-        ini_set('session.cache_limiter', $ini);
+        $this->restoreOriginalSessionIniSettings($ini);
     }
 
     public function testPersistSessionReturnsExpectedResponseWithCacheHeadersIfCacheLimiterIsPublic()
@@ -199,10 +226,10 @@ class PhpSessionPersistenceTest extends TestCase
         $expire = 111;
         $maxAge = 60 * $expire;
 
-        $ini_limiter = ini_get('session.cache_limiter');
-        $ini_expire  = ini_get('session.cache_expire');
-        ini_set('session.cache_limiter', 'public');
-        ini_set('session.cache_expire', $expire);
+        $ini = $this->applyCustomSessionOptions([
+            'cache_limiter' => 'public',
+            'cache_expire'  => $expire,
+        ]);
 
         $persistence = new PhpSessionPersistence();
 
@@ -221,8 +248,7 @@ class PhpSessionPersistenceTest extends TestCase
         $this->assertLessThanOrEqual($expires, $expiresMax);
         $this->assertSame($response->getHeaderLine('Cache-Control'), $control);
 
-        ini_set('session.cache_limiter', $ini_limiter);
-        ini_set('session.cache_expire', $ini_expire);
+        $this->restoreOriginalSessionIniSettings($ini);
     }
 
     public function testPersistSessionReturnsExpectedResponseWithCacheHeadersIfCacheLimiterIsPrivate()
@@ -230,10 +256,10 @@ class PhpSessionPersistenceTest extends TestCase
         $expire = 222;
         $maxAge = 60 * $expire;
 
-        $ini_limiter = ini_get('session.cache_limiter');
-        $ini_expire  = ini_get('session.cache_expire');
-        ini_set('session.cache_limiter', 'private');
-        ini_set('session.cache_expire', $expire);
+        $ini = $this->applyCustomSessionOptions([
+            'cache_limiter' => 'private',
+            'cache_expire'  => $expire,
+        ]);
 
         $persistence = new PhpSessionPersistence();
 
@@ -247,8 +273,7 @@ class PhpSessionPersistenceTest extends TestCase
         $this->assertSame($response->getHeaderLine('Expires'), $expires);
         $this->assertSame($response->getHeaderLine('Cache-Control'), $control);
 
-        ini_set('session.cache_limiter', $ini_limiter);
-        ini_set('session.cache_expire', $ini_expire);
+        $this->restoreOriginalSessionIniSettings($ini);
     }
 
     public function testPersistSessionReturnsExpectedResponseWithCacheHeadersIfCacheLimiterIsPrivateNoExpire()
@@ -256,10 +281,10 @@ class PhpSessionPersistenceTest extends TestCase
         $expire = 333;
         $maxAge = 60 * $expire;
 
-        $ini_limiter = ini_get('session.cache_limiter');
-        $ini_expire  = ini_get('session.cache_expire');
-        ini_set('session.cache_limiter', 'private_no_expire');
-        ini_set('session.cache_expire', $expire);
+        $ini = $this->applyCustomSessionOptions([
+            'cache_limiter' => 'private_no_expire',
+            'cache_expire'  => $expire,
+        ]);
 
         $persistence = new PhpSessionPersistence();
 
@@ -273,14 +298,14 @@ class PhpSessionPersistenceTest extends TestCase
         $this->assertSame('', $response->getHeaderLine('Expires'));
         $this->assertSame($control, $response->getHeaderLine('Cache-Control'));
 
-        ini_set('session.cache_limiter', $ini_limiter);
-        ini_set('session.cache_expire', $ini_expire);
+        $this->restoreOriginalSessionIniSettings($ini);
     }
 
     public function testPersistSessionReturnsExpectedResponseWithoutAddedHeadersIfAlreadyHasAny()
     {
-        $ini = ini_get('session.cache_limiter');
-        ini_set('session.cache_limiter', 'nocache');
+        $ini = $this->applyCustomSessionOptions([
+            'cache_limiter' => 'nocache',
+        ]);
 
         $response = new Response('php://memory', 200, [
             'Last-Modified' => gmdate(PhpSessionPersistence::HTTP_DATE_FORMAT),
@@ -296,14 +321,14 @@ class PhpSessionPersistenceTest extends TestCase
         $this->assertFalse($response->hasHeader('Expires'));
         $this->assertFalse($response->hasHeader('Cache-Control'));
 
-        ini_set('session.cache_limiter', $ini);
+        $this->restoreOriginalSessionIniSettings($ini);
     }
 
     public function testPersistSessionInjectsExpectedLastModifiedHeaderIfScriptFilenameProvided()
     {
-        // temporarily set session.cache_limiter to 'public'
-        $ini = ini_get('session.cache_limiter');
-        ini_set('session.cache_limiter', 'public');
+        $ini = $this->applyCustomSessionOptions([
+            'cache_limiter' => 'public',
+        ]);
 
         $persistence = new PhpSessionPersistence();
 
@@ -316,15 +341,14 @@ class PhpSessionPersistenceTest extends TestCase
 
         $this->assertSame($response->getHeaderLine('Last-Modified'), $lastModified);
 
-        // restore original ini setting
-        ini_set('session.cache_limiter', $ini);
+        $this->restoreOriginalSessionIniSettings($ini);
     }
 
     public function testPersistSessionInjectsExpectedLastModifiedHeaderWithClassFileMtimeIfNoScriptFilenameProvided()
     {
-        // temporarily set session.cache_limiter to 'public'
-        $ini = ini_get('session.cache_limiter');
-        ini_set('session.cache_limiter', 'public');
+        $ini = $this->applyCustomSessionOptions([
+            'cache_limiter' => 'public',
+        ]);
 
         $persistence = new PhpSessionPersistence();
 
@@ -340,15 +364,14 @@ class PhpSessionPersistenceTest extends TestCase
 
         $this->assertSame($response->getHeaderLine('Last-Modified'), $lastModified);
 
-        // restore original ini setting
-        ini_set('session.cache_limiter', $ini);
+        $this->restoreOriginalSessionIniSettings($ini);
     }
 
     public function testPersistSessionDoesNotInjectLastModifiedHeaderIfUnableToDetermineFileMtime()
     {
-        // temporarily set session.cache_limiter to 'public'
-        $ini = ini_get('session.cache_limiter');
-        ini_set('session.cache_limiter', 'public');
+        $ini = $this->applyCustomSessionOptions([
+            'cache_limiter' => 'public',
+        ]);
 
         $persistence = new PhpSessionPersistence();
 
@@ -359,15 +382,14 @@ class PhpSessionPersistenceTest extends TestCase
 
         $this->assertFalse($response->hasHeader('Last-Modified'));
 
-        // restore original ini setting
-        ini_set('session.cache_limiter', $ini);
+        $this->restoreOriginalSessionIniSettings($ini);
     }
 
     public function testPersistSessionReturnsExpectedResponseWithoutAddedCacheHeadersIfEmptyCacheLimiter()
     {
-        // temporarily set session.cache_limiter to ''
-        $ini = ini_get('session.cache_limiter');
-        ini_set('session.cache_limiter', '');
+        $ini = $this->applyCustomSessionOptions([
+            'cache_limiter' => '',
+        ]);
 
         $persistence = new PhpSessionPersistence();
 
@@ -379,15 +401,14 @@ class PhpSessionPersistenceTest extends TestCase
         $this->assertFalse($response->hasHeader('Expires'));
         $this->assertFalse($response->hasHeader('Cache-Control'));
 
-        // restore original ini setting
-        ini_set('session.cache_limiter', $ini);
+        $this->restoreOriginalSessionIniSettings($ini);
     }
 
     public function testPersistSessionReturnsExpectedResponseWithoutAddedCacheHeadersIfUnsupportedCacheLimiter()
     {
-        // temporarily set session.cache_limiter to 'unsupported'
-        $ini = ini_get('session.cache_limiter');
-        ini_set('session.cache_limiter', 'unsupported');
+        $ini = $this->applyCustomSessionOptions([
+            'cache_limiter' => 'unsupported',
+        ]);
 
         $persistence = new PhpSessionPersistence();
 
@@ -399,7 +420,6 @@ class PhpSessionPersistenceTest extends TestCase
         $this->assertFalse($response->hasHeader('Expires'));
         $this->assertFalse($response->hasHeader('Cache-Control'));
 
-        // restore original ini setting
-        ini_set('session.cache_limiter', $ini);
+        $this->restoreOriginalSessionIniSettings($ini);
     }
 }
