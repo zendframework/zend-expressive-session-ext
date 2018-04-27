@@ -123,8 +123,6 @@ class PhpSessionPersistence implements SessionPersistenceInterface
                     $response = $response->withHeader($name, $value);
                 }
             }
-
-            return $response;
         }
 
         return $response;
