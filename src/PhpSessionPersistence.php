@@ -41,7 +41,7 @@ use function session_write_close;
  */
 class PhpSessionPersistence implements SessionPersistenceInterface
 {
-    /** @var Cookie */
+    /** @var string|null */
     private $cookie;
 
     public function initializeSessionFromRequest(ServerRequestInterface $request) : SessionInterface
