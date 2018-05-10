@@ -135,7 +135,7 @@ class PhpSessionPersistenceTest extends TestCase
         /** @var ServerRequestInterface $request */
         $request = FigRequestCookies::set(
             new ServerRequest(),
-            Cookie::create($sessionName, 'use-this-id')
+            Cookie::create($sessionName, 'original-id')
         );
 
         // first request of original session cookie
