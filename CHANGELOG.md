@@ -2,13 +2,19 @@
 
 All notable changes to this project will be documented in this file, in reverse chronological order by release.
 
-## 1.0.2 - TBD
+## 1.1.0 - 2018-05-10
 
 ### Added
 
 - Nothing.
 
 ### Changed
+
+- [#12](https://github.com/zendframework/zend-expressive-session-ext/pull/12) updates the `PhpSessionPersistence` class such that it is now responsible for
+  emitting the various cache limiter headers (`Expires`, `Cache-Control`, `Last-Modified`, and `Pragma`) normally
+  emitted by ext-session and controlled by the `session.cache_limiter` and `session.cache_expire` INI settings.
+  This approach ensures that those headers are not overwritten by ext-session if set elsewhere in your
+  application.
 
 - [#9](https://github.com/zendframework/zend-expressive-session-ext/pull/9) swaps a call to `session_commit` to `session_write_close` withing `PhpSessionPersistence`,
   as the former is an alias for the latter.
