@@ -16,26 +16,6 @@ All notable changes to this project will be documented in this file, in reverse 
   This approach ensures that those headers are not overwritten by ext-session if set elsewhere in your
   application.
 
-### Deprecated
-
-- Nothing.
-
-### Removed
-
-- Nothing.
-
-### Fixed
-
-- Nothing.
-
-## 1.0.2 - TBD
-
-### Added
-
-- Nothing.
-
-### Changed
-
 - [#9](https://github.com/zendframework/zend-expressive-session-ext/pull/9) swaps a call to `session_commit` to `session_write_close` withing `PhpSessionPersistence`,
   as the former is an alias for the latter.
 
