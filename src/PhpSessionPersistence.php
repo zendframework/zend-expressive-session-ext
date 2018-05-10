@@ -45,7 +45,7 @@ use function time;
  */
 class PhpSessionPersistence implements SessionPersistenceInterface
 {
-    /** @var Cookie */
+    /** @var string|null */
     private $cookie;
 
     /** @var string */
