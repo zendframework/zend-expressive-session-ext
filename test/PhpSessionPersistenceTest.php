@@ -422,4 +422,16 @@ class PhpSessionPersistenceTest extends TestCase
 
         $this->restoreOriginalSessionIniSettings($ini);
     }
+
+    public function testPersistSessionReturnsCookieForNewSession(): void
+    {
+        $persistence = new PhpSessionPersistence();
+        $request = new ServerRequest();
+        $session = $persistence->initializeSessionFromRequest($request);
+
+        $response = new Response();
+        $response = $persistence->persistSession($session, $response);
+
+        $this->assertNotEmpty($response->getHeaderLine('Set-Cookie'));
+    }
 }

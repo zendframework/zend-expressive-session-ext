@@ -92,8 +92,12 @@ class PhpSessionPersistence implements SessionPersistenceInterface
     public function initializeSessionFromRequest(ServerRequestInterface $request) : SessionInterface
     {
         $this->scriptFile = $request->getServerParams()['SCRIPT_FILENAME'] ?? __FILE__;
-        $this->cookie = FigRequestCookies::get($request, session_name())->getValue();
-        $id = $this->cookie ?: $this->generateSessionId();
+        $id = $this->cookie = FigRequestCookies::get($request, session_name())->getValue();
+
+        if (! $id) {
+            $id = $this->cookie = $this->generateSessionId();
+        }
+
         $this->startSession($id);
         return new Session($_SESSION);
     }
