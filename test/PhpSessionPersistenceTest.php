@@ -423,7 +423,7 @@ class PhpSessionPersistenceTest extends TestCase
         $this->restoreOriginalSessionIniSettings($ini);
     }
 
-    public function testCookiesNotSetWithoutRegenerate(): void
+    public function testCookiesNotSetWithoutRegenerate()
     {
         $persistence = new PhpSessionPersistence();
         $request = new ServerRequest();
@@ -432,10 +432,10 @@ class PhpSessionPersistenceTest extends TestCase
         $response = new Response();
         $response = $persistence->persistSession($session, $response);
 
-        $this->assertEmpty($response->getHeaderLine('Set-Cookie'));
+        $this->assertFalse($response->hasHeader('Set-Cookie'));
     }
 
-    public function testCookiesSetWithoutRegenerate(): void
+    public function testCookiesSetWithoutRegenerate()
     {
         $persistence = new PhpSessionPersistence();
         $request = new ServerRequest();
