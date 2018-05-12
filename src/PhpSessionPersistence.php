@@ -15,7 +15,6 @@ use Psr\Http\Message\ServerRequestInterface;
 use Zend\Expressive\Session\Session;
 use Zend\Expressive\Session\SessionInterface;
 use Zend\Expressive\Session\SessionPersistenceInterface;
-
 use function array_merge;
 use function bin2hex;
 use function filemtime;
@@ -102,7 +101,8 @@ class PhpSessionPersistence implements SessionPersistenceInterface
         // Regenerate if the session is marked as regenerated
         // Regenerate if there is no cookie id set but the session has changed (new session with data)
         if ($session->isRegenerated()
-            || (! $this->cookie && $session->hasChanged())) {
+            || (! $this->cookie && $session->hasChanged())
+        ) {
             $this->regenerateSession();
         }
 
