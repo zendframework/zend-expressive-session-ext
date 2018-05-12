@@ -198,7 +198,7 @@ class PhpSessionPersistenceTest extends TestCase
     {
         $this->startSession();
         $session = new Session(['foo' => 'bar']);
-        $this->persistence->persistSession($session, new Response);
+        $this->persistence->persistSession($session, new Response());
         $this->assertSame($session->toArray(), $_SESSION);
     }
 
