@@ -102,7 +102,7 @@ class PhpSessionPersistence implements SessionPersistenceInterface
         // Regenerate if the session is marked as regenerated
         // Regenerate if there is no cookie id set but the session has changed (new session with data)
         if ($session->isRegenerated()
-            || ($session->hasChanged() && ! $this->cookie)) {
+            || (! $this->cookie && $session->hasChanged())) {
             $this->regenerateSession();
         }
 
