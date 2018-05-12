@@ -7,7 +7,6 @@
 
 namespace Zend\Expressive\Session\Ext;
 
-use Dflydev\FigCookies\FigCookies\Cookie;
 use Dflydev\FigCookies\FigRequestCookies;
 use Dflydev\FigCookies\FigResponseCookies;
 use Dflydev\FigCookies\SetCookie;
