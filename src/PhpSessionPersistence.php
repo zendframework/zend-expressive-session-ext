@@ -1,13 +1,12 @@
 <?php
 /**
  * @see       https://github.com/zendframework/zend-expressive-session-ext for the canonical source repository
- * @copyright Copyright (c) 2017 Zend Technologies USA Inc. (http://www.zend.com)
+ * @copyright Copyright (c) 2017-2018 Zend Technologies USA Inc. (http://www.zend.com)
  * @license   https://github.com/zendframework/zend-expressive-session-ext/blob/master/LICENSE.md New BSD License
  */
 
 namespace Zend\Expressive\Session\Ext;
 
-use Dflydev\FigCookies\FigCookies\Cookie;
 use Dflydev\FigCookies\FigRequestCookies;
 use Dflydev\FigCookies\FigResponseCookies;
 use Dflydev\FigCookies\SetCookie;
@@ -100,7 +99,11 @@ class PhpSessionPersistence implements SessionPersistenceInterface
 
     public function persistSession(SessionInterface $session, ResponseInterface $response) : ResponseInterface
     {
-        if ($session->isRegenerated()) {
+        // Regenerate if the session is marked as regenerated
+        // Regenerate if there is no cookie id set but the session has changed (new session with data)
+        if ($session->isRegenerated()
+            || (! $this->cookie && $session->hasChanged())
+        ) {
             $this->regenerateSession();
         }
 

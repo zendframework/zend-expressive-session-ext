@@ -1,7 +1,7 @@
 <?php
 /**
  * @see       https://github.com/zendframework/zend-expressive-session-ext for the canonical source repository
- * @copyright Copyright (c) 2017 Zend Technologies USA Inc. (http://www.zend.com)
+ * @copyright Copyright (c) 2017-2018 Zend Technologies USA Inc. (http://www.zend.com)
  * @license   https://github.com/zendframework/zend-expressive-session-ext/blob/master/LICENSE.md New BSD License
  */
 
@@ -182,7 +182,7 @@ class PhpSessionPersistenceTest extends TestCase
     {
         $this->startSession();
         $session = new Session(['foo' => 'bar']);
-        $this->persistence->persistSession($session, new Response);
+        $this->persistence->persistSession($session, new Response());
         $this->assertSame($session->toArray(), $_SESSION);
     }
 
@@ -415,5 +415,31 @@ class PhpSessionPersistenceTest extends TestCase
         $this->assertFalse($response->hasHeader('Cache-Control'));
 
         $this->restoreOriginalSessionIniSettings($ini);
+    }
+
+    public function testCookiesNotSetWithoutRegenerate()
+    {
+        $persistence = new PhpSessionPersistence();
+        $request = new ServerRequest();
+        $session = $persistence->initializeSessionFromRequest($request);
+
+        $response = new Response();
+        $response = $persistence->persistSession($session, $response);
+
+        $this->assertFalse($response->hasHeader('Set-Cookie'));
+    }
+
+    public function testCookiesSetWithoutRegenerate()
+    {
+        $persistence = new PhpSessionPersistence();
+        $request = new ServerRequest();
+        $session = $persistence->initializeSessionFromRequest($request);
+
+        $session->set('foo', 'bar');
+
+        $response = new Response();
+        $response = $persistence->persistSession($session, $response);
+
+        $this->assertNotEmpty($response->getHeaderLine('Set-Cookie'));
     }
 }
