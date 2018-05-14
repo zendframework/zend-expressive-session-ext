@@ -2,7 +2,7 @@
 
 All notable changes to this project will be documented in this file, in reverse chronological order by release.
 
-## 1.1.1 - TBD
+## 1.1.1 - 2018-05-14
 
 ### Added
 
@@ -22,7 +22,10 @@ All notable changes to this project will be documented in this file, in reverse 
 
 ### Fixed
 
-- Nothing.
+- [#21](https://github.com/zendframework/zend-expressive-session-ext/pull/21) fixes a situation whereby during persistence, if no identifier existed for
+  the session, it was not persisted. Such situations would occur when a new session was created, as
+  no identifier would yet exist. It now properly generates an identifier and persists the data in
+  such cirumstances.
 
 ## 1.1.0 - 2018-05-10
 
