@@ -442,4 +442,45 @@ class PhpSessionPersistenceTest extends TestCase
 
         $this->assertNotEmpty($response->getHeaderLine('Set-Cookie'));
     }
+
+    public function testCookiesSetWithDefaultLifetime()
+    {
+        $persistence = new PhpSessionPersistence();
+        $request = new ServerRequest();
+        $session = $persistence->initializeSessionFromRequest($request);
+
+        $session->set('foo', 'bar');
+
+        $response = $persistence->persistSession($session, new Response());
+
+        $setCookie = FigResponseCookies::get($response, session_name());
+
+        $this->assertNotEmpty($response->getHeaderLine('Set-Cookie'));
+        $this->assertInstanceOf(SetCookie::class, $setCookie);
+        $this->assertSame(0, $setCookie->getExpires());
+    }
+
+    public function testCookiesSetWithCustomLifetime()
+    {
+        $lifetime = 300;
+        $expectedTimestamp = time() + $lifetime;
+
+        $ini = $this->applyCustomSessionOptions([
+            'cookie_lifetime' => $lifetime,
+        ]);
+
+        $persistence = new PhpSessionPersistence();
+        $request = new ServerRequest();
+        $session = $persistence->initializeSessionFromRequest($request);
+
+        $session->set('foo', 'bar');
+
+        $response = $persistence->persistSession($session, new Response());
+
+        $setCookie = FigResponseCookies::get($response, session_name());
+        $this->assertInstanceOf(SetCookie::class, $setCookie);
+        $this->assertSame($expectedTimestamp, $setCookie->getExpires());
+
+        $this->restoreOriginalSessionIniSettings($ini);
+    }
 }
