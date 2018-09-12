@@ -4,7 +4,7 @@
         "Read more about it at https://getcomposer.org/doc/01-basic-usage.md#installing-dependencies",
         "This file is @generated automatically"
     ],
-    "content-hash": "8f39ff08b64017aee8beef8e875e71b2",
+    "content-hash": "ae13e0afdd691c1647efe0ff883eaee7",
     "packages": [
         {
             "name": "dflydev/fig-cookies",
@@ -265,16 +265,16 @@
         },
         {
             "name": "zendframework/zend-expressive-session",
-            "version": "1.0.0",
+            "version": "1.1.0",
             "source": {
                 "type": "git",
                 "url": "https://github.com/zendframework/zend-expressive-session.git",
-                "reference": "632fba38f01e884bb788ac3baf529d41458d75a4"
+                "reference": "1bcb8e7869b47e30f1ba692f15e52481d1d550db"
             },
             "dist": {
                 "type": "zip",
-                "url": "https://api.github.com/repos/zendframework/zend-expressive-session/zipball/632fba38f01e884bb788ac3baf529d41458d75a4",
-                "reference": "632fba38f01e884bb788ac3baf529d41458d75a4",
+                "url": "https://api.github.com/repos/zendframework/zend-expressive-session/zipball/1bcb8e7869b47e30f1ba692f15e52481d1d550db",
+                "reference": "1bcb8e7869b47e30f1ba692f15e52481d1d550db",
                 "shasum": ""
             },
             "require": {
@@ -297,8 +297,8 @@
             "type": "library",
             "extra": {
                 "branch-alias": {
-                    "dev-master": "1.0.x-dev",
-                    "dev-develop": "1.1.x-dev"
+                    "dev-master": "1.1.x-dev",
+                    "dev-develop": "1.2.x-dev"
                 },
                 "zf": {
                     "config-provider": "Zend\\Expressive\\Session\\ConfigProvider"
@@ -323,7 +323,7 @@
                 "zend-expressive",
                 "zf"
             ],
-            "time": "2018-03-15T14:36:37+00:00"
+            "time": "2018-09-12T15:16:19+00:00"
         }
     ],
     "packages-dev": [

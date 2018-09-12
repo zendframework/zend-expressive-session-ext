@@ -2,11 +2,13 @@
 
 All notable changes to this project will be documented in this file, in reverse chronological order by release.
 
-## 1.1.2 - TBD
+## 1.2.0 - 2018-09-12
 
 ### Added
 
-- Nothing.
+- [#24](https://github.com/zendframework/zend-expressive-session-ext/pull/24) adds support for `session.cookie_lifetime` configuration. When
+  present, the generated session cookie will be provided with an expiration date
+  based on that value.
 
 ### Changed
 
@@ -22,7 +24,8 @@ All notable changes to this project will be documented in this file, in reverse 
 
 ### Fixed
 
-- Nothing.
+- [#25](https://github.com/zendframework/zend-expressive-session-ext/pull/25) fixes a situation where creating a new session with no data was
+  always creating a `SetCookie` header. It now correctly skips creating the header.
 
 ## 1.1.1 - 2018-05-14
 
