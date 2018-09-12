@@ -45,9 +45,6 @@ use function time;
  */
 class PhpSessionPersistence implements SessionPersistenceInterface
 {
-    /** @var string|null */
-    private $cookie;
-
     /** @var string */
     private $cacheLimiter;
 
@@ -91,45 +88,53 @@ class PhpSessionPersistence implements SessionPersistenceInterface
     public function initializeSessionFromRequest(ServerRequestInterface $request) : SessionInterface
     {
         $this->scriptFile = $request->getServerParams()['SCRIPT_FILENAME'] ?? __FILE__;
-        $this->cookie = FigRequestCookies::get($request, session_name())->getValue();
-        $id = $this->cookie ?: $this->generateSessionId();
+        $sessionId = FigRequestCookies::get($request, session_name())->getValue() ?? '';
+        $id = $sessionId ?: $this->generateSessionId();
         $this->startSession($id);
-        return new Session($_SESSION);
+        return new Session($_SESSION, $sessionId);
     }
 
     public function persistSession(SessionInterface $session, ResponseInterface $response) : ResponseInterface
     {
-        // Regenerate if the session is marked as regenerated
-        // Regenerate if there is no cookie id set but the session has changed (new session with data)
+        $id = $session->getId();
+
+        // Regenerate if:
+        // - the session is marked as regenerated
+        // - the id is empty, but the data has changed (new session)
         if ($session->isRegenerated()
-            || (! $this->cookie && $session->hasChanged())
+            || ('' === $id && $session->hasChanged())
         ) {
-            $this->regenerateSession();
+            $id = $this->regenerateSession();
         }
 
         $_SESSION = $session->toArray();
         session_write_close();
 
-        if ($this->cookie) {
-            $sessionCookie = SetCookie::create(session_name())
-                ->withValue($this->cookie)
-                ->withPath(ini_get('session.cookie_path'));
+        // If we do not have an identifier at this point, it means a new
+        // session was created, but never written to. In that case, there's
+        // no reason to provide a cookie back to the user.
+        if ('' === $id) {
+            return $response;
+        }
 
-            if ($cookieLifetime = (int) ini_get('session.cookie_lifetime')) {
-                $sessionCookie = $sessionCookie->withExpires(time() + $cookieLifetime);
-            }
+        $sessionCookie = SetCookie::create(session_name())
+            ->withValue($id)
+            ->withPath(ini_get('session.cookie_path'));
 
-            $response = FigResponseCookies::set($response, $sessionCookie);
+        if ($cookieLifetime = (int) ini_get('session.cookie_lifetime')) {
+            $sessionCookie = $sessionCookie->withExpires(time() + $cookieLifetime);
+        }
 
-            if (! $this->cacheLimiter || $this->responseAlreadyHasCacheHeaders($response)) {
-                return $response;
-            }
+        $response = FigResponseCookies::set($response, $sessionCookie);
 
-            $cacheHeaders = $this->generateCacheHeaders();
-            foreach ($cacheHeaders as $name => $value) {
-                if (false !== $value) {
-                    $response = $response->withHeader($name, $value);
-                }
+        if (! $this->cacheLimiter || $this->responseAlreadyHasCacheHeaders($response)) {
+            return $response;
+        }
+
+        $cacheHeaders = $this->generateCacheHeaders();
+        foreach ($cacheHeaders as $name => $value) {
+            if (false !== $value) {
+                $response = $response->withHeader($name, $value);
             }
         }
 
@@ -154,13 +159,14 @@ class PhpSessionPersistence implements SessionPersistenceInterface
      *
      * @link http://php.net/manual/en/function.session-regenerate-id.php (Example #2)
      */
-    private function regenerateSession() : void
+    private function regenerateSession() : string
     {
         session_write_close();
-        $this->cookie = $this->generateSessionId();
-        $this->startSession($this->cookie, [
+        $id = $this->generateSessionId();
+        $this->startSession($id, [
             'use_strict_mode' => false,
         ]);
+        return $id;
     }
 
     /**

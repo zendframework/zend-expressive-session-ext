@@ -24,7 +24,8 @@ All notable changes to this project will be documented in this file, in reverse 
 
 ### Fixed
 
-- Nothing.
+- [#25](https://github.com/zendframework/zend-expressive-session-ext/pull/25) fixes a situation where creating a new session with no data was
+  always creating a `SetCookie` header. It now correctly skips creating the header.
 
 ## 1.1.2 - TBD
 
