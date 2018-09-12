@@ -115,6 +115,10 @@ class PhpSessionPersistence implements SessionPersistenceInterface
                 ->withValue($this->cookie)
                 ->withPath(ini_get('session.cookie_path'));
 
+            if ($cookieLifetime = (int) ini_get('session.cookie_lifetime')) {
+                $sessionCookie = $sessionCookie->withExpires(time() + $cookieLifetime);
+            }
+
             $response = FigResponseCookies::set($response, $sessionCookie);
 
             if (! $this->cacheLimiter || $this->responseAlreadyHasCacheHeaders($response)) {

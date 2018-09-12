@@ -6,7 +6,9 @@ All notable changes to this project will be documented in this file, in reverse 
 
 ### Added
 
-- Nothing.
+- [#24](https://github.com/zendframework/zend-expressive-session-ext/pull/24) adds support for `session.cookie_lifetime` configuration. When
+  present, the generated session cookie will be provided with an expiration date
+  based on that value.
 
 ### Changed
 
