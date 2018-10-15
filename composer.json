@@ -22,7 +22,7 @@
     "require": {
         "php": "^7.1",
         "ext-session": "*",
-        "dflydev/fig-cookies": "^1.0",
+        "dflydev/fig-cookies": "^1.0 || ^2.0",
         "zendframework/zend-expressive-session": "^1.1"
     },
     "require-dev": {
