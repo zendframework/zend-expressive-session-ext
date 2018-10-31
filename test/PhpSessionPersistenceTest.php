@@ -17,6 +17,7 @@ use Zend\Diactoros\Response;
 use Zend\Diactoros\ServerRequest;
 use Zend\Expressive\Session\Ext\PhpSessionPersistence;
 use Zend\Expressive\Session\Session;
+use Zend\Expressive\Session\SessionCookiePersistenceInterface;
 
 use function ini_get;
 use function gmdate;
@@ -480,6 +481,72 @@ class PhpSessionPersistenceTest extends TestCase
         $setCookie = FigResponseCookies::get($response, session_name());
         $this->assertInstanceOf(SetCookie::class, $setCookie);
         $this->assertSame($expectedTimestamp, $setCookie->getExpires());
+
+        $this->restoreOriginalSessionIniSettings($ini);
+    }
+
+    public function testAllowsSessionToSpecifyLifetime()
+    {
+        $originalLifetime = ini_get('session.cookie_lifetime');
+
+        $persistence = new PhpSessionPersistence();
+        $request = new ServerRequest();
+        $session = $persistence->initializeSessionFromRequest($request);
+
+        $lifetime = 300;
+        $session->persistSessionFor($lifetime);
+
+        $response = $persistence->persistSession($session, new Response());
+
+        $setCookie = FigResponseCookies::get($response, session_name());
+        $this->assertInstanceOf(SetCookie::class, $setCookie);
+        $this->assertSame(time() + $lifetime, $setCookie->getExpires());
+
+        // reset lifetime
+        session_set_cookie_params($originalLifetime);
+    }
+
+    public function testAllowsSessionToOverrideDefaultLifetime()
+    {
+        $ini = $this->applyCustomSessionOptions([
+            'cookie_lifetime' => 600,
+        ]);
+
+        $persistence = new PhpSessionPersistence();
+        $request = new ServerRequest();
+        $session = $persistence->initializeSessionFromRequest($request);
+
+        $lifetime = 300;
+        $session->persistSessionFor($lifetime);
+
+        $response = $persistence->persistSession($session, new Response());
+
+        $setCookie = FigResponseCookies::get($response, session_name());
+        $this->assertInstanceOf(SetCookie::class, $setCookie);
+        $this->assertSame(time() + $lifetime, $setCookie->getExpires());
+
+        $this->restoreOriginalSessionIniSettings($ini);
+    }
+
+    public function testSavedSessionLifetimeOverridesDefaultLifetime()
+    {
+        $ini = $this->applyCustomSessionOptions([
+            'cookie_lifetime' => 600,
+        ]);
+        $lifetime = 300;
+
+        $persistence = new PhpSessionPersistence();
+        $request = new ServerRequest();
+        $session = new Session([
+            SessionCookiePersistenceInterface::SESSION_LIFETIME_KEY => $lifetime,
+            'foo' => 'bar',
+        ], 'abcdef123456');
+
+        $response = $persistence->persistSession($session, new Response());
+
+        $setCookie = FigResponseCookies::get($response, session_name());
+        $this->assertInstanceOf(SetCookie::class, $setCookie);
+        $this->assertSame(time() + $lifetime, $setCookie->getExpires());
 
         $this->restoreOriginalSessionIniSettings($ini);
     }
