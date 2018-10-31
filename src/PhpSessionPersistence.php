@@ -13,6 +13,7 @@ use Dflydev\FigCookies\SetCookie;
 use Psr\Http\Message\ResponseInterface;
 use Psr\Http\Message\ServerRequestInterface;
 use Zend\Expressive\Session\Session;
+use Zend\Expressive\Session\SessionCookiePersistenceInterface;
 use Zend\Expressive\Session\SessionInterface;
 use Zend\Expressive\Session\SessionPersistenceInterface;
 
@@ -121,7 +122,7 @@ class PhpSessionPersistence implements SessionPersistenceInterface
             ->withValue($id)
             ->withPath(ini_get('session.cookie_path'));
 
-        if ($cookieLifetime = (int) ini_get('session.cookie_lifetime')) {
+        if ($cookieLifetime = $this->getCookieLifetime($session)) {
             $sessionCookie = $sessionCookie->withExpires(time() + $cookieLifetime);
         }
 
@@ -251,5 +252,17 @@ class PhpSessionPersistence implements SessionPersistenceInterface
             || $response->hasHeader('Cache-Control')
             || $response->hasHeader('Pragma')
         );
+    }
+
+    private function getCookieLifetime(SessionInterface $session) : int
+    {
+        $lifetime = (int) ini_get('session.cookie_lifetime');
+        if ($session instanceof SessionCookiePersistenceInterface
+            && $session->has(SessionCookiePersistenceInterface::SESSION_LIFETIME_KEY)
+        ) {
+            $lifetime = $session->getSessionLifetime();
+        }
+
+        return $lifetime > 0 ? $lifetime : 0;
     }
 }

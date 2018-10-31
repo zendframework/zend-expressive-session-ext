@@ -2,11 +2,14 @@
 
 All notable changes to this project will be documented in this file, in reverse chronological order by release.
 
-## 1.2.1 - TBD
+## 1.3.0 - 2018-10-31
 
 ### Added
 
-- Nothing.
+- [#29](https://github.com/zendframework/zend-expressive-session-ext/pull/29) adds support for the zend-expressive-session `SessionCookiePersistenceInterface`.
+  Specifically, `PhpSessionPersistence::persistSession()` now consults the
+  session instance for a requested session duration, using it if present, even
+  if a `session.cookie_lifetime` INI value was previously set.
 
 ### Changed
 

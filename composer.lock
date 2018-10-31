@@ -1,10 +1,10 @@
 {
     "_readme": [
         "This file locks the dependencies of your project to a known state",
-        "Read more about it at https://getcomposer.org/doc/01-basic-usage.md#installing-dependencies",
+        "Read more about it at https://getcomposer.org/doc/01-basic-usage.md#composer-lock-the-lock-file",
         "This file is @generated automatically"
     ],
-    "content-hash": "ae13e0afdd691c1647efe0ff883eaee7",
+    "content-hash": "54e236fa9013f306f3b633510c06c815",
     "packages": [
         {
             "name": "dflydev/fig-cookies",
@@ -265,16 +265,16 @@
         },
         {
             "name": "zendframework/zend-expressive-session",
-            "version": "1.1.0",
+            "version": "1.2.0",
             "source": {
                 "type": "git",
                 "url": "https://github.com/zendframework/zend-expressive-session.git",
-                "reference": "1bcb8e7869b47e30f1ba692f15e52481d1d550db"
+                "reference": "de67a644d34848451e137919b7018161f7dced13"
             },
             "dist": {
                 "type": "zip",
-                "url": "https://api.github.com/repos/zendframework/zend-expressive-session/zipball/1bcb8e7869b47e30f1ba692f15e52481d1d550db",
-                "reference": "1bcb8e7869b47e30f1ba692f15e52481d1d550db",
+                "url": "https://api.github.com/repos/zendframework/zend-expressive-session/zipball/de67a644d34848451e137919b7018161f7dced13",
+                "reference": "de67a644d34848451e137919b7018161f7dced13",
                 "shasum": ""
             },
             "require": {
@@ -297,8 +297,8 @@
             "type": "library",
             "extra": {
                 "branch-alias": {
-                    "dev-master": "1.1.x-dev",
-                    "dev-develop": "1.2.x-dev"
+                    "dev-master": "1.2.x-dev",
+                    "dev-develop": "1.3.x-dev"
                 },
                 "zf": {
                     "config-provider": "Zend\\Expressive\\Session\\ConfigProvider"
@@ -323,7 +323,7 @@
                 "zend-expressive",
                 "zf"
             ],
-            "time": "2018-09-12T15:16:19+00:00"
+            "time": "2018-10-30T21:08:51+00:00"
         }
     ],
     "packages-dev": [
