@@ -120,7 +120,10 @@ class PhpSessionPersistence implements SessionPersistenceInterface
 
         $sessionCookie = SetCookie::create(session_name())
             ->withValue($id)
-            ->withPath(ini_get('session.cookie_path'));
+            ->withPath(ini_get('session.cookie_path'))
+            ->withDomain(ini_get('session.cookie_domain'))
+            ->withSecure(ini_get('session.cookie_secure'))
+            ->withHttpOnly(ini_get('session.cookie_httponly'));
 
         if ($cookieLifetime = $this->getCookieLifetime($session)) {
             $sessionCookie = $sessionCookie->withExpires(time() + $cookieLifetime);
