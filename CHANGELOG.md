@@ -2,11 +2,13 @@
 
 All notable changes to this project will be documented in this file, in reverse chronological order by release.
 
-## 1.3.1 - TBD
+## 1.4.0 - 2019-01-09
 
 ### Added
 
-- Nothing.
+- [#31](https://github.com/zendframework/zend-expressive-session-ext/pull/31) adds support for the `session.cookie_domain`, `session.cookie_httponly`,
+  and `session.cookie_secure` INI values when creating the `Set-Cookie` header
+  value.
 
 ### Changed
 
