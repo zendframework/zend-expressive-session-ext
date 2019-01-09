@@ -164,6 +164,11 @@ class PhpSessionPersistenceTest extends TestCase
         $this->assertInstanceOf(SetCookie::class, $setCookie);
         $this->assertSame(session_id(), $setCookie->getValue());
         $this->assertSame(ini_get('session.cookie_path'), $setCookie->getPath());
+
+        // @see https://github.com/zendframework/zend-expressive-session-ext/pull/31
+        $this->assertSame(ini_get('session.cookie_domain') ?: null, $setCookie->getDomain());
+        $this->assertSame((bool) ini_get('session.cookie_secure'), $setCookie->getSecure());
+        $this->assertSame((bool) ini_get('session.cookie_httponly'), $setCookie->getHttpOnly());
     }
 
     /**
