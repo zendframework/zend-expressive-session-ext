@@ -554,7 +554,7 @@ class PhpSessionPersistenceTest extends TestCase
         $this->assertSame(time() + $lifetime, $setCookie->getExpires());
 
         $this->restoreOriginalSessionIniSettings($ini);
-    }    
+    }
 
     public function testStartSessionDoesNotOverrideRequiredSettings()
     {
