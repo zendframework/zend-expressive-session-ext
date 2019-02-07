@@ -554,5 +554,31 @@ class PhpSessionPersistenceTest extends TestCase
         $this->assertSame(time() + $lifetime, $setCookie->getExpires());
 
         $this->restoreOriginalSessionIniSettings($ini);
+    }    
+
+    public function testStartSessionDoesNotOverrideRequiredSettings()
+    {
+        $persistence = new PhpSessionPersistence();
+
+        $method = new \ReflectionMethod($persistence, 'startSession');
+        $method->setAccessible(true);
+
+        // try to override required settings
+        $method->invokeArgs($persistence, [
+            'my-session-id',
+            [
+                'use_cookies'      => true, // FALSE is required
+                'use_only_cookies' => false, // TRUE is required
+                'cache_limiter'    => 'nocache', // '' is required
+            ]
+        ]);
+
+        $session_use_cookies      = filter_var(ini_get('session.use_cookies'), FILTER_VALIDATE_BOOLEAN, FILTER_NULL_ON_FAILURE);
+        $session_use_only_cookies = filter_var(ini_get('session.use_only_cookies'), FILTER_VALIDATE_BOOLEAN, FILTER_NULL_ON_FAILURE);
+        $session_cache_limiter    = ini_get('session.cache_limiter');
+
+        $this->assertSame(false, $session_use_cookies);
+        $this->assertSame(true, $session_use_only_cookies);
+        $this->assertSame('', $session_cache_limiter);
     }
 }
