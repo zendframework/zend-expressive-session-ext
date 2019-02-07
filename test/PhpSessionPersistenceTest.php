@@ -573,8 +573,11 @@ class PhpSessionPersistenceTest extends TestCase
             ]
         ]);
 
-        $session_use_cookies      = filter_var(ini_get('session.use_cookies'), FILTER_VALIDATE_BOOLEAN, FILTER_NULL_ON_FAILURE);
-        $session_use_only_cookies = filter_var(ini_get('session.use_only_cookies'), FILTER_VALIDATE_BOOLEAN, FILTER_NULL_ON_FAILURE);
+        $filter = FILTER_VALIDATE_BOOLEAN;
+        $flags  = FILTER_NULL_ON_FAILURE;
+
+        $session_use_cookies      = filter_var(ini_get('session.use_cookies'), $filter, $flags);
+        $session_use_only_cookies = filter_var(ini_get('session.use_only_cookies'), $filter, $flags);
         $session_cache_limiter    = ini_get('session.cache_limiter');
 
         $this->assertSame(false, $session_use_cookies);
