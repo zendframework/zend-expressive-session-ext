@@ -151,11 +151,11 @@ class PhpSessionPersistence implements SessionPersistenceInterface
     private function startSession(string $id, array $options = []) : void
     {
         session_id($id);
-        session_start(array_merge([
+        session_start([
             'use_cookies'      => false,
             'use_only_cookies' => true,
             'cache_limiter'    => '',
-        ], $options));
+        ] + $options);
     }
 
     /**

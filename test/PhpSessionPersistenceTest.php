@@ -13,6 +13,7 @@ use Dflydev\FigCookies\FigResponseCookies;
 use Dflydev\FigCookies\SetCookie;
 use PHPUnit\Framework\TestCase;
 use Psr\Http\Message\ServerRequestInterface;
+use ReflectionMethod;
 use Zend\Diactoros\Response;
 use Zend\Diactoros\ServerRequest;
 use Zend\Expressive\Session\Ext\PhpSessionPersistence;
@@ -554,5 +555,34 @@ class PhpSessionPersistenceTest extends TestCase
         $this->assertSame(time() + $lifetime, $setCookie->getExpires());
 
         $this->restoreOriginalSessionIniSettings($ini);
+    }
+
+    public function testStartSessionDoesNotOverrideRequiredSettings()
+    {
+        $persistence = new PhpSessionPersistence();
+
+        $method = new ReflectionMethod($persistence, 'startSession');
+        $method->setAccessible(true);
+
+        // try to override required settings
+        $method->invokeArgs($persistence, [
+            'my-session-id',
+            [
+                'use_cookies'      => true,      // FALSE is required
+                'use_only_cookies' => false,     // TRUE is required
+                'cache_limiter'    => 'nocache', // '' is required
+            ]
+        ]);
+
+        $filter = FILTER_VALIDATE_BOOLEAN;
+        $flags  = FILTER_NULL_ON_FAILURE;
+
+        $session_use_cookies      = filter_var(ini_get('session.use_cookies'), $filter, $flags);
+        $session_use_only_cookies = filter_var(ini_get('session.use_only_cookies'), $filter, $flags);
+        $session_cache_limiter    = ini_get('session.cache_limiter');
+
+        $this->assertFalse($session_use_cookies);
+        $this->assertTrue($session_use_only_cookies);
+        $this->assertSame('', $session_cache_limiter);
     }
 }
