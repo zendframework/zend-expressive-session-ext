@@ -10,7 +10,11 @@ All notable changes to this project will be documented in this file, in reverse 
 
 ### Changed
 
-- Nothing.
+- [#34](https://github.com/zendframework/zend-expressive-session-ext/pull/34) modifies the logic used when starting a session to ensure the REQUIRED
+  defaults are always set. These include:
+  - session.use_cookies = false
+  - session.use_only_cookes = true
+  - session.cache_limiter = ""
 
 ### Deprecated
 
