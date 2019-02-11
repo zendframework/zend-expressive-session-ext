@@ -2,7 +2,7 @@
 
 All notable changes to this project will be documented in this file, in reverse chronological order by release.
 
-## 1.5.0 - TBD
+## 1.5.0 - 2019-02-11
 
 ### Added
 
@@ -15,28 +15,6 @@ All notable changes to this project will be documented in this file, in reverse 
   - session.use_cookies = false
   - session.use_only_cookes = true
   - session.cache_limiter = ""
-
-### Deprecated
-
-- Nothing.
-
-### Removed
-
-- Nothing.
-
-### Fixed
-
-- Nothing.
-
-## 1.4.1 - TBD
-
-### Added
-
-- Nothing.
-
-### Changed
-
-- Nothing.
 
 ### Deprecated
 
