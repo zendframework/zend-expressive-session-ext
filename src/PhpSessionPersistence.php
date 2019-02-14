@@ -55,6 +55,9 @@ class PhpSessionPersistence implements SessionPersistenceInterface
     /** @var string */
     private $scriptFile;
 
+    /** @var string */
+    private $cookie;
+
     /** @var array */
     private static $supported_cache_limiters = [
         'nocache'           => true,
@@ -89,47 +92,38 @@ class PhpSessionPersistence implements SessionPersistenceInterface
     public function initializeSessionFromRequest(ServerRequestInterface $request) : SessionInterface
     {
         $this->scriptFile = $request->getServerParams()['SCRIPT_FILENAME'] ?? __FILE__;
-        $sessionId = FigRequestCookies::get($request, session_name())->getValue() ?? '';
-        $id = $sessionId ?: $this->generateSessionId();
+        $this->cookie = FigRequestCookies::get($request, session_name())->getValue() ?? '';
+        $id = $this->cookie ?: $this->generateSessionId();
         $this->startSession($id);
         return new Session($_SESSION, $id);
     }
 
     public function persistSession(SessionInterface $session, ResponseInterface $response) : ResponseInterface
     {
-        $id = $session->getId();
-
-        // Regenerate if:
-        // - the session is marked as regenerated
-        // - the id is empty, but the data has changed (new session)
-        if ($session->isRegenerated()
-            || ('' === $id && $session->hasChanged())
-        ) {
-            $id = $this->regenerateSession();
-        }
+        // Regenerate if the session is marked as regenerated
+        $id = $session->isRegenerated()
+            ? $this->regenerateSession()
+            : $session->getId();
 
         $_SESSION = $session->toArray();
         session_write_close();
 
-        // If we do not have an identifier at this point, it means a new
-        // session was created, but never written to. In that case, there's
-        // no reason to provide a cookie back to the user.
-        if ('' === $id) {
-            return $response;
+        // Calculate the COOKIE lifetime
+        $cookieLifetime = $this->getCookieLifetime($session);
+        $expires = $cookieLifetime ? time() + $cookieLifetime : 0;
+
+        // Set the COOKIE if necessary
+        if (empty($this->cookie) || $cookieLifetime) {
+            $sessionCookie = SetCookie::create(session_name())
+                ->withValue($id)
+                ->withPath(ini_get('session.cookie_path'))
+                ->withDomain(ini_get('session.cookie_domain'))
+                ->withSecure(ini_get('session.cookie_secure'))
+                ->withHttpOnly(ini_get('session.cookie_httponly'))
+                ->withExpires($expires);
+
+            $response = FigResponseCookies::set($response, $sessionCookie);
         }
-
-        $sessionCookie = SetCookie::create(session_name())
-            ->withValue($id)
-            ->withPath(ini_get('session.cookie_path'))
-            ->withDomain(ini_get('session.cookie_domain'))
-            ->withSecure(ini_get('session.cookie_secure'))
-            ->withHttpOnly(ini_get('session.cookie_httponly'));
-
-        if ($cookieLifetime = $this->getCookieLifetime($session)) {
-            $sessionCookie = $sessionCookie->withExpires(time() + $cookieLifetime);
-        }
-
-        $response = FigResponseCookies::set($response, $sessionCookie);
 
         if (! $this->cacheLimiter || $this->responseAlreadyHasCacheHeaders($response)) {
             return $response;
