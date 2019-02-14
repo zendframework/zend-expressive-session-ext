@@ -27,9 +27,12 @@ use function random_bytes;
 use function session_id;
 use function session_name;
 use function session_start;
+use function session_status;
 use function session_write_close;
 use function sprintf;
 use function time;
+
+use const PHP_SESSION_ACTIVE;
 
 /**
  * Session persistence using ext-session.
@@ -90,9 +93,10 @@ class PhpSessionPersistence implements SessionPersistenceInterface
     {
         $this->scriptFile = $request->getServerParams()['SCRIPT_FILENAME'] ?? __FILE__;
         $sessionId = FigRequestCookies::get($request, session_name())->getValue() ?? '';
-        $id = $sessionId ?: $this->generateSessionId();
-        $this->startSession($id);
-        return new Session($_SESSION, $sessionId);
+        if ($sessionId) {
+            $this->startSession($sessionId);
+        }
+        return new Session($_SESSION ?? [], $sessionId);
     }
 
     public function persistSession(SessionInterface $session, ResponseInterface $response) : ResponseInterface
@@ -165,7 +169,9 @@ class PhpSessionPersistence implements SessionPersistenceInterface
      */
     private function regenerateSession() : string
     {
-        session_write_close();
+        if (PHP_SESSION_ACTIVE === session_status()) {
+            session_write_close();
+        }
         $id = $this->generateSessionId();
         $this->startSession($id, [
             'use_strict_mode' => false,
