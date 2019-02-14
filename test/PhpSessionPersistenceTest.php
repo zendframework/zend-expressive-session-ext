@@ -11,6 +11,7 @@ use Dflydev\FigCookies\Cookie;
 use Dflydev\FigCookies\FigRequestCookies;
 use Dflydev\FigCookies\FigResponseCookies;
 use Dflydev\FigCookies\SetCookie;
+use Dflydev\FigCookies\SetCookies;
 use PHPUnit\Framework\TestCase;
 use Psr\Http\Message\ServerRequestInterface;
 use ReflectionMethod;
@@ -96,18 +97,17 @@ class PhpSessionPersistenceTest extends TestCase
         }
     }
 
-    public function testInitializeSessionFromRequestInitializesSessionWithGeneratedIdentifierIfNoSessionCookiePresent()
+    public function testInitializeSessionFromRequestDoesNotStartPhpSessionIfNoSessionCookiePresent()
     {
         $this->assertSame(PHP_SESSION_NONE, session_status());
 
         $request = new ServerRequest();
         $session = $this->persistence->initializeSessionFromRequest($request);
 
-        $this->assertSame(PHP_SESSION_ACTIVE, session_status());
+        $this->assertSame(PHP_SESSION_NONE, session_status());
+        $this->assertSame('', session_id());
         $this->assertInstanceOf(Session::class, $session);
-        $this->assertSame($_SESSION, $session->toArray());
-        $id = session_id();
-        $this->assertRegExp('/^[a-f0-9]{32}$/i', $id);
+        $this->assertFalse(isset($_SESSION));
     }
 
     public function testInitializeSessionFromRequestUsesSessionCookieFromRequest()
@@ -121,6 +121,37 @@ class PhpSessionPersistenceTest extends TestCase
         $this->assertInstanceOf(Session::class, $session);
         $this->assertSame($_SESSION, $session->toArray());
         $this->assertSame('use-this-id', session_id());
+    }
+
+    public function testPersistSessionStartsPhpSessionEvenIfNoSessionCookiePresentButSessionChanged()
+    {
+        // reuest without session-cookie
+        $request = new ServerRequest();
+
+        // first request of original session cookie
+        $session = $this->persistence->initializeSessionFromRequest($request);
+
+        // no php session here
+        $this->assertSame(PHP_SESSION_NONE, session_status());
+        $this->assertFalse(isset($_SESSION));
+
+        // alter session
+        $session->set('foo', 'bar');
+
+        $response = new Response();
+        $returnedResponse = $this->persistence->persistSession($session, $response);
+
+        // check that php-session was started and $session data persisted into it
+        $this->assertTrue(isset($_SESSION));
+        $this->assertRegExp('/^[a-f0-9]{32}$/i', session_id());
+        $this->assertSame($session->toArray(), $_SESSION);
+
+        // check the returned response
+        $this->assertNotSame($response, $returnedResponse);
+        $setCookie = FigResponseCookies::get($returnedResponse, session_name());
+        $this->assertInstanceOf(SetCookie::class, $setCookie);
+        $this->assertNotEquals('', $setCookie->getValue());
+        $this->assertSame(session_id(), $setCookie->getValue());
     }
 
     public function testPersistSessionGeneratesCookieWithNewSessionIdIfSessionWasRegenerated()
@@ -596,5 +627,112 @@ class PhpSessionPersistenceTest extends TestCase
         $this->assertFalse($session_use_cookies);
         $this->assertTrue($session_use_only_cookies);
         $this->assertSame('', $session_cache_limiter);
+    }
+
+    public function testNoMultipleEmptySessionFilesAreCreatedIfNoSessionCookiePresent()
+    {
+        $sessionName     = 'NOSESSIONCOOKIESESSID';
+        $sessionSavePath = __DIR__ . "/sess";
+
+        $ini = $this->applyCustomSessionOptions([
+            'name'      => $sessionName,
+            'save_path' => $sessionSavePath,
+        ]);
+
+        // create a temp session save path
+        if (! is_dir($sessionSavePath)) {
+            mkdir($sessionSavePath);
+        }
+
+        // remove old session test files if any
+        $files = glob("{$sessionSavePath}/sess_*");
+        if ($files) {
+            foreach ($files as $file) {
+                unlink($file);
+            }
+        }
+
+        $persistence = new PhpSessionPersistence();
+
+        // initial sessioncookie-less request
+        $request = new ServerRequest();
+
+        for ($i = 0; $i < 3; $i += 1) {
+            $session  = $persistence->initializeSessionFromRequest($request);
+            $response = $persistence->persistSession($session, new Response());
+
+            // new request: start w/o session cookie
+            $request = new ServerRequest();
+
+            // Add the latest response session cookie value to the new request, if any
+            $setCookies = SetCookies::fromResponse($response);
+            if ($setCookies->has($sessionName)) {
+                $setCookie = $setCookies->get($sessionName);
+            }
+            if (isset($setCookie)) {
+                $cookie = new Cookie($sessionName, $setCookie->getValue());
+                $request = FigRequestCookies::set($request, $cookie);
+            }
+        }
+
+        $files = glob("{$sessionSavePath}/sess_*");
+
+        $this->assertSame(0, count($files));
+
+        $this->restoreOriginalSessionIniSettings($ini);
+    }
+
+    public function testOnlyOneSessionFileIsCreatedIfNoSessionCookiePresentINFirstRequestButSessionDataChanged()
+    {
+        $sessionName     = 'NOSESSIONCOOKIESESSID';
+        $sessionSavePath = __DIR__ . "/sess";
+
+        $ini = $this->applyCustomSessionOptions([
+            'name'      => $sessionName,
+            'save_path' => $sessionSavePath,
+        ]);
+
+        // create a temp session save path
+        if (! is_dir($sessionSavePath)) {
+            mkdir($sessionSavePath);
+        }
+
+        // remove old session test files if any
+        $files = glob("{$sessionSavePath}/sess_*");
+        if ($files) {
+            foreach ($files as $file) {
+                unlink($file);
+            }
+        }
+
+        $persistence = new PhpSessionPersistence();
+
+        // initial sessioncookie-less request
+        $request = new ServerRequest();
+
+        for ($i = 0; $i < 3; $i += 1) {
+            $session  = $persistence->initializeSessionFromRequest($request);
+            $session->set('foo' . $i, 'bar' . $i);
+            $response = $persistence->persistSession($session, new Response());
+
+            // new request: start w/o session cookie
+            $request = new ServerRequest();
+
+            // Add the latest response session cookie value to the new request, if any
+            $setCookies = SetCookies::fromResponse($response);
+            if ($setCookies->has($sessionName)) {
+                $setCookie = $setCookies->get($sessionName);
+            }
+            if (isset($setCookie)) {
+                $cookie = new Cookie($sessionName, $setCookie->getValue());
+                $request = FigRequestCookies::set($request, $cookie);
+            }
+        }
+
+        $files = glob("{$sessionSavePath}/sess_*");
+
+        $this->assertSame(1, count($files));
+
+        $this->restoreOriginalSessionIniSettings($ini);
     }
 }
