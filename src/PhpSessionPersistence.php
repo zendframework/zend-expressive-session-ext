@@ -32,8 +32,6 @@ use function session_write_close;
 use function sprintf;
 use function time;
 
-use const PHP_SESSION_ACTIVE;
-
 /**
  * Session persistence using ext-session.
  *
@@ -169,9 +167,7 @@ class PhpSessionPersistence implements SessionPersistenceInterface
      */
     private function regenerateSession() : string
     {
-        if (PHP_SESSION_ACTIVE === session_status()) {
-            session_write_close();
-        }
+        session_write_close();
         $id = $this->generateSessionId();
         $this->startSession($id, [
             'use_strict_mode' => false,
