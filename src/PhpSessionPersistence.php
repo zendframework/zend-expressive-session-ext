@@ -113,7 +113,7 @@ class PhpSessionPersistence implements SessionPersistenceInterface
         $expires = $cookieLifetime ? time() + $cookieLifetime : 0;
 
         // Set the COOKIE if necessary
-        if (empty($this->cookie) || $cookieLifetime) {
+        if (empty($this->cookie) || $session->isRegenerated() || $cookieLifetime) {
             $sessionCookie = SetCookie::create(session_name())
                 ->withValue($id)
                 ->withPath(ini_get('session.cookie_path'))
