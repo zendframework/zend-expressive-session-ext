@@ -172,19 +172,6 @@ class PhpSessionPersistenceTest extends TestCase
         $this->assertSame((bool) ini_get('session.cookie_httponly'), $setCookie->getHttpOnly());
     }
 
-    /**
-     * If Session COOKIE is not present, persistSession() method must return the original Response
-     */
-    public function testPersistSessionReturnsOriginalResponseIfNoSessionCookiePresent()
-    {
-        $this->startSession();
-        $session = new Session([]);
-        $response = new Response();
-
-        $returnedResponse = $this->persistence->persistSession($session, $response);
-        $this->assertSame($response, $returnedResponse);
-    }
-
     public function testPersistSessionIfSessionHasContents()
     {
         $this->startSession();
@@ -424,7 +411,7 @@ class PhpSessionPersistenceTest extends TestCase
         $this->restoreOriginalSessionIniSettings($ini);
     }
 
-    public function testCookiesNotSetWithoutRegenerate()
+    public function testCookiesSetWithEmptySessionDataWithoutRegenerate()
     {
         $persistence = new PhpSessionPersistence();
         $request = new ServerRequest();
@@ -433,10 +420,10 @@ class PhpSessionPersistenceTest extends TestCase
         $response = new Response();
         $response = $persistence->persistSession($session, $response);
 
-        $this->assertFalse($response->hasHeader('Set-Cookie'));
+        $this->assertNotEmpty($response->getHeaderLine('Set-Cookie'));
     }
 
-    public function testCookiesSetWithoutRegenerate()
+    public function testCookiesSetWithSessionDataWithoutRegenerate()
     {
         $persistence = new PhpSessionPersistence();
         $request = new ServerRequest();
