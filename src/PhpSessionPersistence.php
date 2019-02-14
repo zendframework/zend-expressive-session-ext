@@ -92,7 +92,7 @@ class PhpSessionPersistence implements SessionPersistenceInterface
         $sessionId = FigRequestCookies::get($request, session_name())->getValue() ?? '';
         $id = $sessionId ?: $this->generateSessionId();
         $this->startSession($id);
-        return new Session($_SESSION, $sessionId);
+        return new Session($_SESSION, $id);
     }
 
     public function persistSession(SessionInterface $session, ResponseInterface $response) : ResponseInterface
