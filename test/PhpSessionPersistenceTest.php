@@ -156,6 +156,7 @@ class PhpSessionPersistenceTest extends TestCase
     {
         $request = $this->createSessionCookieRequest('use-this-id');
         $session = $this->persistence->initializeSessionFromRequest($request);
+        $session->persistSessionFor(300); // This is in order to work out the conditions for sending the COOKIE
 
         $response = new Response();
         $returnedResponse = $this->persistence->persistSession($session, $response);
