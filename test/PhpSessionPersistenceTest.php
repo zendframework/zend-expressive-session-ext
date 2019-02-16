@@ -525,11 +525,17 @@ class PhpSessionPersistenceTest extends TestCase
         $lifetime = 300;
         $session->persistSessionFor($lifetime);
 
+        $expiresMin = time() + $lifetime;
         $response = $persistence->persistSession($session, new Response());
+        $expiresMax = time() + $lifetime;
 
         $setCookie = FigResponseCookies::get($response, session_name());
         $this->assertInstanceOf(SetCookie::class, $setCookie);
-        $this->assertSame(time() + $lifetime, $setCookie->getExpires());
+
+        $expires = $setCookie->getExpires();
+
+        $this->assertLessThanOrEqual($expiresMin, $expires);
+        $this->assertLessThanOrEqual($expiresMax, $expires);
 
         $this->restoreOriginalSessionIniSettings($ini);
     }
@@ -548,11 +554,17 @@ class PhpSessionPersistenceTest extends TestCase
             'foo' => 'bar',
         ], 'abcdef123456');
 
+        $expiresMin = time() + $lifetime;
         $response = $persistence->persistSession($session, new Response());
+        $expiresMax = time() + $lifetime;
 
         $setCookie = FigResponseCookies::get($response, session_name());
         $this->assertInstanceOf(SetCookie::class, $setCookie);
-        $this->assertSame(time() + $lifetime, $setCookie->getExpires());
+
+        $expires = $setCookie->getExpires();
+
+        $this->assertGreaterThanOrEqual($expiresMin, $expires);
+        $this->assertLessThanOrEqual($expiresMax, $expires);
 
         $this->restoreOriginalSessionIniSettings($ini);
     }
