@@ -534,7 +534,7 @@ class PhpSessionPersistenceTest extends TestCase
 
         $expires = $setCookie->getExpires();
 
-        $this->assertLessThanOrEqual($expiresMin, $expires);
+        $this->assertGreaterThanOrEqual($expiresMin, $expires);
         $this->assertLessThanOrEqual($expiresMax, $expires);
 
         $this->restoreOriginalSessionIniSettings($ini);
