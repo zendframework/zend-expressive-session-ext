@@ -677,7 +677,7 @@ class PhpSessionPersistenceTest extends TestCase
 
         $files = glob("{$sessionSavePath}/sess_*");
 
-        $this->assertSame(0, count($files));
+        $this->assertCount(0, $files);
 
         $this->restoreOriginalSessionIniSettings($ini);
     }
@@ -731,7 +731,7 @@ class PhpSessionPersistenceTest extends TestCase
 
         $files = glob("{$sessionSavePath}/sess_*");
 
-        $this->assertSame(1, count($files));
+        $this->assertCount(1, $files);
 
         $this->restoreOriginalSessionIniSettings($ini);
     }
