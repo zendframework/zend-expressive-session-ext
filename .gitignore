@@ -2,6 +2,7 @@
 /coveralls-upload.json
 /docs/html/
 /phpunit.xml
+/test/sess/
 /vendor/
 /zf-mkdoc-theme.tgz
 /zf-mkdoc-theme/
