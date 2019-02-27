@@ -2,7 +2,7 @@
 
 All notable changes to this project will be documented in this file, in reverse chronological order by release.
 
-## 1.5.1 - TBD
+## 1.5.1 - 2019-02-27
 
 ### Added
 
@@ -22,7 +22,8 @@ All notable changes to this project will be documented in this file, in reverse 
 
 ### Fixed
 
-- Nothing.
+- [#36](https://github.com/zendframework/zend-expressive-session-ext/pull/36) provides a fix that prevents session files from being created when no
+  session cookie was sent by the client.
 
 ## 1.5.0 - 2019-02-11
 
