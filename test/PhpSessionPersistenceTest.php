@@ -125,7 +125,7 @@ class PhpSessionPersistenceTest extends TestCase
 
     public function testPersistSessionStartsPhpSessionEvenIfNoSessionCookiePresentButSessionChanged()
     {
-        // reuest without session-cookie
+        // request without session-cookie
         $request = new ServerRequest();
 
         // first request of original session cookie
