@@ -14,6 +14,7 @@ use Dflydev\FigCookies\SetCookie;
 use Dflydev\FigCookies\SetCookies;
 use PHPUnit\Framework\TestCase;
 use Psr\Http\Message\ServerRequestInterface;
+use ReflectionClass;
 use ReflectionMethod;
 use Zend\Diactoros\Response;
 use Zend\Diactoros\ServerRequest;
@@ -22,7 +23,9 @@ use Zend\Expressive\Session\Session;
 use Zend\Expressive\Session\SessionCookiePersistenceInterface;
 
 use function ini_get;
+use function filemtime;
 use function gmdate;
+use function getlastmod;
 use function session_id;
 use function session_name;
 use function session_start;
@@ -356,7 +359,7 @@ class PhpSessionPersistenceTest extends TestCase
         $this->restoreOriginalSessionIniSettings($ini);
     }
 
-    public function testPersistSessionInjectsExpectedLastModifiedHeaderIfScriptFilenameProvided()
+    public function testPersistSessionInjectsExpectedLastModifiedHeader()
     {
         $ini = $this->applyCustomSessionOptions([
             'cache_limiter' => 'public',
@@ -364,55 +367,22 @@ class PhpSessionPersistenceTest extends TestCase
 
         $persistence = new PhpSessionPersistence();
 
-        // mocked request with script file set to current file
-        $request  = $this->createSessionCookieRequest(null, null, ['SCRIPT_FILENAME' => __FILE__]);
-        $session  = $persistence->initializeSessionFromRequest($request);
-        $response = $persistence->persistSession($session, new Response());
-
-        $lastModified = gmdate(PhpSessionPersistence::HTTP_DATE_FORMAT, filemtime(__FILE__));
-
-        $this->assertSame($response->getHeaderLine('Last-Modified'), $lastModified);
-
-        $this->restoreOriginalSessionIniSettings($ini);
-    }
-
-    public function testPersistSessionInjectsExpectedLastModifiedHeaderWithClassFileMtimeIfNoScriptFilenameProvided()
-    {
-        $ini = $this->applyCustomSessionOptions([
-            'cache_limiter' => 'public',
-        ]);
-
-        $persistence = new PhpSessionPersistence();
-
-        // mocked request without script file
         $request  = $this->createSessionCookieRequest();
         $session  = $persistence->initializeSessionFromRequest($request);
         $response = $persistence->persistSession($session, new Response());
 
-        $reflection = new \ReflectionClass($persistence);
-        $classFile  = $reflection->getFileName();
+        $rc = new ReflectionClass($persistence);
+        $classFile = $rc->getFileName();
 
-        $lastModified = gmdate(PhpSessionPersistence::HTTP_DATE_FORMAT, filemtime($classFile));
+        $lastmod = getlastmod() ?: filemtime($classFile);
+        $lastModified = $lastmod ? gmdate(PhpSessionPersistence::HTTP_DATE_FORMAT, $lastmod) : false;
 
-        $this->assertSame($response->getHeaderLine('Last-Modified'), $lastModified);
+        $expectedHeaderLine = false === $lastModified ? '' : $lastModified;
 
-        $this->restoreOriginalSessionIniSettings($ini);
-    }
-
-    public function testPersistSessionDoesNotInjectLastModifiedHeaderIfUnableToDetermineFileMtime()
-    {
-        $ini = $this->applyCustomSessionOptions([
-            'cache_limiter' => 'public',
-        ]);
-
-        $persistence = new PhpSessionPersistence();
-
-        // mocked request with non-existing script file
-        $request  = $this->createSessionCookieRequest(null, null, ['SCRIPT_FILENAME' => 'n0n3x15t3nt!']);
-        $session  = $persistence->initializeSessionFromRequest($request);
-        $response = $persistence->persistSession($session, new Response());
-
-        $this->assertFalse($response->hasHeader('Last-Modified'));
+        $this->assertSame($expectedHeaderLine, $response->getHeaderLine('Last-Modified'));
+        if (false === $lastModified) {
+            $this->assertFalse($response->hasHeader('Last-Modified'));
+        }
 
         $this->restoreOriginalSessionIniSettings($ini);
     }
