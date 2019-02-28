@@ -2,7 +2,7 @@
 
 All notable changes to this project will be documented in this file, in reverse chronological order by release.
 
-## 1.6.0 - TBD
+## 1.6.0 - 2019-02-28
 
 ### Added
 
@@ -17,28 +17,6 @@ All notable changes to this project will be documented in this file, in reverse 
 - [#40](https://github.com/zendframework/zend-expressive-session-ext/pull/40) modifies the logic that builds the session cookie to better parse the
   entire spectrum of expected `php.ini` values for boolean flags, ensuring that
   values such as "On" and "Off" evaluate to `true` and `false`, respectively.
-
-### Deprecated
-
-- Nothing.
-
-### Removed
-
-- Nothing.
-
-### Fixed
-
-- Nothing.
-
-## 1.5.2 - TBD
-
-### Added
-
-- Nothing.
-
-### Changed
-
-- Nothing.
 
 ### Deprecated
 
