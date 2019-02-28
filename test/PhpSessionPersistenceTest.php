@@ -371,10 +371,13 @@ class PhpSessionPersistenceTest extends TestCase
         $session  = $persistence->initializeSessionFromRequest($request);
         $response = $persistence->persistSession($session, new Response());
 
-        $rc = new ReflectionClass($persistence);
-        $classFile = $rc->getFileName();
+        $lastmod = getlastmod();
+        if (false === $lastmod) {
+            $rc = new ReflectionClass($persistence);
+            $classFile = $rc->getFileName();
+            $lastmod = filemtime($classFile);
+        }
 
-        $lastmod = getlastmod() ?: filemtime($classFile);
         $lastModified = $lastmod ? gmdate(PhpSessionPersistence::HTTP_DATE_FORMAT, $lastmod) : false;
 
         $expectedHeaderLine = false === $lastModified ? '' : $lastModified;
