@@ -22,10 +22,10 @@ use Zend\Expressive\Session\Ext\PhpSessionPersistence;
 use Zend\Expressive\Session\Session;
 use Zend\Expressive\Session\SessionCookiePersistenceInterface;
 
-use function ini_get;
 use function filemtime;
-use function gmdate;
 use function getlastmod;
+use function gmdate;
+use function ini_get;
 use function session_id;
 use function session_name;
 use function session_start;
