@@ -31,8 +31,8 @@ use function session_write_close;
 use function sprintf;
 use function time;
 
-use const FILTER_VALIDATE_BOOLEAN;
 use const FILTER_NULL_ON_FAILURE;
+use const FILTER_VALIDATE_BOOLEAN;
 
 /**
  * Session persistence using ext-session.
@@ -185,7 +185,6 @@ class PhpSessionPersistence implements SessionPersistenceInterface
      *
      * @param string $name The session name as the cookie name
      * @param string $id The session id as the cookie value
-     * @return SetCookie
      */
     private function createSessionCookie(string $name, string $id) : SetCookie
     {

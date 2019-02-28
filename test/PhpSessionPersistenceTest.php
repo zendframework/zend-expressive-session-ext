@@ -749,12 +749,14 @@ class PhpSessionPersistenceTest extends TestCase
 
     /**
      * @dataProvider cookieSettingsProvider
+     * @param string|int|bool $secureIni
+     * @param string|int|bool $httpOnlyIni
      */
     public function testThatSetCookieCorrectlyInterpretsIniSettings(
         $secureIni,
         $httpOnlyIni,
-        $expectedSecure,
-        $expectedHttpOnly
+        bool $expectedSecure,
+        bool $expectedHttpOnly
     ) {
         $ini = $this->applyCustomSessionOptions([
             'cookie_secure'   => $secureIni,
@@ -779,19 +781,27 @@ class PhpSessionPersistenceTest extends TestCase
 
     public function cookieSettingsProvider()
     {
-        // obvious input/results data are left (commented out) for reference
+        // @codingStandardsIgnoreStart
+        // phpcs:disable
         return [
-            //[false, false, false, false],
-            //[0, 0, false, false],
-            //['0', '0', false, false],
-            //['', '', false, false],
-            ['off', 'off', false, false],
-            ['Off', 'Off', false, false],
-            //[true, true, true, true],
-            //[1, 1, true, true],
-            //['1', '1', true, true],
-            //['on', 'on', true, true],
-            //['On', 'On', true, true],
+            // Each case has:
+            // - session.cookie_secure INI flag value
+            // - session.cookie_httponly INI flag value
+            // - expected value for session.cookie_secure after registration
+            // - expected value for session.cookie_httponly after registration
+            'boolean-false-false' => [false, false, false, false],
+            'int-zero-false'      => [    0,     0, false, false],
+            'string-zero-false'   => [  '0',   '0', false, false],
+            'string-empty-false'  => [   '',    '', false, false],
+            'string-off-false'    => ['off', 'off', false, false],
+            'string-Off-false'    => ['Off', 'Off', false, false],
+            'boolean-true-true'   => [ true,  true,  true,  true],
+            'int-one-true'        => [    1,     1,  true,  true],
+            'string-one-true'     => [   '1',  '1',  true,  true],
+            'string-on-true'      => [  'on',  'on', true,  true],
+            'string-On-true'      => [  'On',  'On', true,  true],
         ];
+        // phpcs:enable
+        // @codingStandardsIgnoreEnd
     }
 }
