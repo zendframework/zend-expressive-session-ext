@@ -31,6 +31,9 @@ use function session_write_close;
 use function sprintf;
 use function time;
 
+use const FILTER_VALIDATE_BOOLEAN;
+use const FILTER_NULL_ON_FAILURE;
+
 /**
  * Session persistence using ext-session.
  *
@@ -119,12 +122,7 @@ class PhpSessionPersistence implements SessionPersistenceInterface
             return $response;
         }
 
-        $sessionCookie = SetCookie::create(session_name())
-            ->withValue($id)
-            ->withPath(ini_get('session.cookie_path'))
-            ->withDomain(ini_get('session.cookie_domain'))
-            ->withSecure(ini_get('session.cookie_secure'))
-            ->withHttpOnly(ini_get('session.cookie_httponly'));
+        $sessionCookie = $this->createSessionCookie(session_name(), $id);
 
         if ($cookieLifetime = $this->getCookieLifetime($session)) {
             $sessionCookie = $sessionCookie->withExpires(time() + $cookieLifetime);
@@ -180,6 +178,34 @@ class PhpSessionPersistence implements SessionPersistenceInterface
     private function generateSessionId() : string
     {
         return bin2hex(random_bytes(16));
+    }
+
+    /**
+     * Build a SetCookie parsing boolean ini settings
+     *
+     * @param string $name The session name as the cookie name
+     * @param string $id The session id as the cookie value
+     * @return SetCookie
+     */
+    private function createSessionCookie(string $name, string $id) : SetCookie
+    {
+        $secure = filter_var(
+            ini_get('session.cookie_secure'),
+            FILTER_VALIDATE_BOOLEAN,
+            FILTER_NULL_ON_FAILURE
+        );
+        $httpOnly = filter_var(
+            ini_get('session.cookie_httponly'),
+            FILTER_VALIDATE_BOOLEAN,
+            FILTER_NULL_ON_FAILURE
+        );
+
+        return SetCookie::create($name)
+            ->withValue($id)
+            ->withPath(ini_get('session.cookie_path'))
+            ->withDomain(ini_get('session.cookie_domain'))
+            ->withSecure($secure)
+            ->withHttpOnly($httpOnly);
     }
 
     /**

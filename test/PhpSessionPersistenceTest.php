@@ -746,4 +746,52 @@ class PhpSessionPersistenceTest extends TestCase
 
         $this->restoreOriginalSessionIniSettings($ini);
     }
+
+    /**
+     * @dataProvider cookieSettingsProvider
+     */
+    public function testThatSetCookieCorrectlyInterpretsIniSettings(
+        $secureIni,
+        $httpOnlyIni,
+        $expectedSecure,
+        $expectedHttpOnly
+    ) {
+        $ini = $this->applyCustomSessionOptions([
+            'cookie_secure'   => $secureIni,
+            'cookie_httponly' => $httpOnlyIni,
+        ]);
+
+        $persistence = new PhpSessionPersistence();
+
+        $createSessionCookie = new ReflectionMethod($persistence, 'createSessionCookie');
+        $createSessionCookie->setAccessible(true);
+
+        $setCookie = $createSessionCookie->invokeArgs(
+            $persistence,
+            ['SETCOOKIESESSIONID', 'set-cookie-test-value']
+        );
+
+        $this->assertSame($expectedSecure, $setCookie->getSecure());
+        $this->assertSame($expectedHttpOnly, $setCookie->getHttpOnly());
+
+        $this->restoreOriginalSessionIniSettings($ini);
+    }
+
+    public function cookieSettingsProvider()
+    {
+        // obvious input/results data are left (commented out) for reference
+        return [
+            //[false, false, false, false],
+            //[0, 0, false, false],
+            //['0', '0', false, false],
+            //['', '', false, false],
+            ['off', 'off', false, false],
+            ['Off', 'Off', false, false],
+            //[true, true, true, true],
+            //[1, 1, true, true],
+            //['1', '1', true, true],
+            //['on', 'on', true, true],
+            //['On', 'On', true, true],
+        ];
+    }
 }
