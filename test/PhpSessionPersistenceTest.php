@@ -14,6 +14,7 @@ use Dflydev\FigCookies\SetCookie;
 use Dflydev\FigCookies\SetCookies;
 use PHPUnit\Framework\TestCase;
 use Psr\Http\Message\ServerRequestInterface;
+use ReflectionClass;
 use ReflectionMethod;
 use Zend\Diactoros\Response;
 use Zend\Diactoros\ServerRequest;
@@ -21,8 +22,10 @@ use Zend\Expressive\Session\Ext\PhpSessionPersistence;
 use Zend\Expressive\Session\Session;
 use Zend\Expressive\Session\SessionCookiePersistenceInterface;
 
-use function ini_get;
+use function filemtime;
+use function getlastmod;
 use function gmdate;
+use function ini_get;
 use function session_id;
 use function session_name;
 use function session_start;
@@ -356,7 +359,7 @@ class PhpSessionPersistenceTest extends TestCase
         $this->restoreOriginalSessionIniSettings($ini);
     }
 
-    public function testPersistSessionInjectsExpectedLastModifiedHeaderIfScriptFilenameProvided()
+    public function testPersistSessionInjectsExpectedLastModifiedHeader()
     {
         $ini = $this->applyCustomSessionOptions([
             'cache_limiter' => 'public',
@@ -364,55 +367,25 @@ class PhpSessionPersistenceTest extends TestCase
 
         $persistence = new PhpSessionPersistence();
 
-        // mocked request with script file set to current file
-        $request  = $this->createSessionCookieRequest(null, null, ['SCRIPT_FILENAME' => __FILE__]);
-        $session  = $persistence->initializeSessionFromRequest($request);
-        $response = $persistence->persistSession($session, new Response());
-
-        $lastModified = gmdate(PhpSessionPersistence::HTTP_DATE_FORMAT, filemtime(__FILE__));
-
-        $this->assertSame($response->getHeaderLine('Last-Modified'), $lastModified);
-
-        $this->restoreOriginalSessionIniSettings($ini);
-    }
-
-    public function testPersistSessionInjectsExpectedLastModifiedHeaderWithClassFileMtimeIfNoScriptFilenameProvided()
-    {
-        $ini = $this->applyCustomSessionOptions([
-            'cache_limiter' => 'public',
-        ]);
-
-        $persistence = new PhpSessionPersistence();
-
-        // mocked request without script file
         $request  = $this->createSessionCookieRequest();
         $session  = $persistence->initializeSessionFromRequest($request);
         $response = $persistence->persistSession($session, new Response());
 
-        $reflection = new \ReflectionClass($persistence);
-        $classFile  = $reflection->getFileName();
+        $lastmod = getlastmod();
+        if (false === $lastmod) {
+            $rc = new ReflectionClass($persistence);
+            $classFile = $rc->getFileName();
+            $lastmod = filemtime($classFile);
+        }
 
-        $lastModified = gmdate(PhpSessionPersistence::HTTP_DATE_FORMAT, filemtime($classFile));
+        $lastModified = $lastmod ? gmdate(PhpSessionPersistence::HTTP_DATE_FORMAT, $lastmod) : false;
 
-        $this->assertSame($response->getHeaderLine('Last-Modified'), $lastModified);
+        $expectedHeaderLine = false === $lastModified ? '' : $lastModified;
 
-        $this->restoreOriginalSessionIniSettings($ini);
-    }
-
-    public function testPersistSessionDoesNotInjectLastModifiedHeaderIfUnableToDetermineFileMtime()
-    {
-        $ini = $this->applyCustomSessionOptions([
-            'cache_limiter' => 'public',
-        ]);
-
-        $persistence = new PhpSessionPersistence();
-
-        // mocked request with non-existing script file
-        $request  = $this->createSessionCookieRequest(null, null, ['SCRIPT_FILENAME' => 'n0n3x15t3nt!']);
-        $session  = $persistence->initializeSessionFromRequest($request);
-        $response = $persistence->persistSession($session, new Response());
-
-        $this->assertFalse($response->hasHeader('Last-Modified'));
+        $this->assertSame($expectedHeaderLine, $response->getHeaderLine('Last-Modified'));
+        if (false === $lastModified) {
+            $this->assertFalse($response->hasHeader('Last-Modified'));
+        }
 
         $this->restoreOriginalSessionIniSettings($ini);
     }
@@ -501,7 +474,6 @@ class PhpSessionPersistenceTest extends TestCase
     public function testCookiesSetWithCustomLifetime()
     {
         $lifetime = 300;
-        $expectedTimestamp = time() + $lifetime;
 
         $ini = $this->applyCustomSessionOptions([
             'cookie_lifetime' => $lifetime,
@@ -513,11 +485,17 @@ class PhpSessionPersistenceTest extends TestCase
 
         $session->set('foo', 'bar');
 
+        $expiresMin = time() + $lifetime;
         $response = $persistence->persistSession($session, new Response());
+        $expiresMax = time() + $lifetime;
 
         $setCookie = FigResponseCookies::get($response, session_name());
         $this->assertInstanceOf(SetCookie::class, $setCookie);
-        $this->assertSame($expectedTimestamp, $setCookie->getExpires());
+
+        $expires = $setCookie->getExpires();
+
+        $this->assertGreaterThanOrEqual($expiresMin, $expires);
+        $this->assertLessThanOrEqual($expiresMax, $expires);
 
         $this->restoreOriginalSessionIniSettings($ini);
     }
@@ -533,11 +511,17 @@ class PhpSessionPersistenceTest extends TestCase
         $lifetime = 300;
         $session->persistSessionFor($lifetime);
 
+        $expiresMin = time() + $lifetime;
         $response = $persistence->persistSession($session, new Response());
+        $expiresMax = time() + $lifetime;
 
         $setCookie = FigResponseCookies::get($response, session_name());
         $this->assertInstanceOf(SetCookie::class, $setCookie);
-        $this->assertSame(time() + $lifetime, $setCookie->getExpires());
+
+        $expires = $setCookie->getExpires();
+
+        $this->assertGreaterThanOrEqual($expiresMin, $expires);
+        $this->assertLessThanOrEqual($expiresMax, $expires);
 
         // reset lifetime
         session_set_cookie_params($originalLifetime);
@@ -734,5 +718,63 @@ class PhpSessionPersistenceTest extends TestCase
         $this->assertCount(1, $files);
 
         $this->restoreOriginalSessionIniSettings($ini);
+    }
+
+    /**
+     * @dataProvider cookieSettingsProvider
+     * @param string|int|bool $secureIni
+     * @param string|int|bool $httpOnlyIni
+     */
+    public function testThatSetCookieCorrectlyInterpretsIniSettings(
+        $secureIni,
+        $httpOnlyIni,
+        bool $expectedSecure,
+        bool $expectedHttpOnly
+    ) {
+        $ini = $this->applyCustomSessionOptions([
+            'cookie_secure'   => $secureIni,
+            'cookie_httponly' => $httpOnlyIni,
+        ]);
+
+        $persistence = new PhpSessionPersistence();
+
+        $createSessionCookie = new ReflectionMethod($persistence, 'createSessionCookie');
+        $createSessionCookie->setAccessible(true);
+
+        $setCookie = $createSessionCookie->invokeArgs(
+            $persistence,
+            ['SETCOOKIESESSIONID', 'set-cookie-test-value']
+        );
+
+        $this->assertSame($expectedSecure, $setCookie->getSecure());
+        $this->assertSame($expectedHttpOnly, $setCookie->getHttpOnly());
+
+        $this->restoreOriginalSessionIniSettings($ini);
+    }
+
+    public function cookieSettingsProvider()
+    {
+        // @codingStandardsIgnoreStart
+        // phpcs:disable
+        return [
+            // Each case has:
+            // - session.cookie_secure INI flag value
+            // - session.cookie_httponly INI flag value
+            // - expected value for session.cookie_secure after registration
+            // - expected value for session.cookie_httponly after registration
+            'boolean-false-false' => [false, false, false, false],
+            'int-zero-false'      => [    0,     0, false, false],
+            'string-zero-false'   => [  '0',   '0', false, false],
+            'string-empty-false'  => [   '',    '', false, false],
+            'string-off-false'    => ['off', 'off', false, false],
+            'string-Off-false'    => ['Off', 'Off', false, false],
+            'boolean-true-true'   => [ true,  true,  true,  true],
+            'int-one-true'        => [    1,     1,  true,  true],
+            'string-one-true'     => [   '1',  '1',  true,  true],
+            'string-on-true'      => [  'on',  'on', true,  true],
+            'string-On-true'      => [  'On',  'On', true,  true],
+        ];
+        // phpcs:enable
+        // @codingStandardsIgnoreEnd
     }
 }

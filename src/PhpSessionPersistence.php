@@ -20,9 +20,9 @@ use Zend\Expressive\Session\SessionPersistenceInterface;
 use function array_merge;
 use function bin2hex;
 use function filemtime;
+use function getlastmod;
 use function gmdate;
 use function ini_get;
-use function is_file;
 use function random_bytes;
 use function session_id;
 use function session_name;
@@ -30,6 +30,9 @@ use function session_start;
 use function session_write_close;
 use function sprintf;
 use function time;
+
+use const FILTER_NULL_ON_FAILURE;
+use const FILTER_VALIDATE_BOOLEAN;
 
 /**
  * Session persistence using ext-session.
@@ -51,9 +54,6 @@ class PhpSessionPersistence implements SessionPersistenceInterface
 
     /** @var int */
     private $cacheExpire;
-
-    /** @var string */
-    private $scriptFile;
 
     /** @var array */
     private static $supported_cache_limiters = [
@@ -88,7 +88,6 @@ class PhpSessionPersistence implements SessionPersistenceInterface
 
     public function initializeSessionFromRequest(ServerRequestInterface $request) : SessionInterface
     {
-        $this->scriptFile = $request->getServerParams()['SCRIPT_FILENAME'] ?? __FILE__;
         $sessionId = FigRequestCookies::get($request, session_name())->getValue() ?? '';
         if ($sessionId) {
             $this->startSession($sessionId);
@@ -119,12 +118,7 @@ class PhpSessionPersistence implements SessionPersistenceInterface
             return $response;
         }
 
-        $sessionCookie = SetCookie::create(session_name())
-            ->withValue($id)
-            ->withPath(ini_get('session.cookie_path'))
-            ->withDomain(ini_get('session.cookie_domain'))
-            ->withSecure(ini_get('session.cookie_secure'))
-            ->withHttpOnly(ini_get('session.cookie_httponly'));
+        $sessionCookie = $this->createSessionCookie(session_name(), $id);
 
         if ($cookieLifetime = $this->getCookieLifetime($session)) {
             $sessionCookie = $sessionCookie->withExpires(time() + $cookieLifetime);
@@ -183,6 +177,33 @@ class PhpSessionPersistence implements SessionPersistenceInterface
     }
 
     /**
+     * Build a SetCookie parsing boolean ini settings
+     *
+     * @param string $name The session name as the cookie name
+     * @param string $id The session id as the cookie value
+     */
+    private function createSessionCookie(string $name, string $id) : SetCookie
+    {
+        $secure = filter_var(
+            ini_get('session.cookie_secure'),
+            FILTER_VALIDATE_BOOLEAN,
+            FILTER_NULL_ON_FAILURE
+        );
+        $httpOnly = filter_var(
+            ini_get('session.cookie_httponly'),
+            FILTER_VALIDATE_BOOLEAN,
+            FILTER_NULL_ON_FAILURE
+        );
+
+        return SetCookie::create($name)
+            ->withValue($id)
+            ->withPath(ini_get('session.cookie_path'))
+            ->withDomain(ini_get('session.cookie_domain'))
+            ->withSecure($secure)
+            ->withHttpOnly($httpOnly);
+    }
+
+    /**
      * Generate cache http headers for this instance's session cache_limiter and
      * cache_expire values
      */
@@ -231,18 +252,15 @@ class PhpSessionPersistence implements SessionPersistenceInterface
     }
 
     /**
-     * Return the Last-Modified header line based on the request's script file
-     * modified time. If no script file could be derived from the request we use
-     * this class file modification time as fallback.
+     * Return the Last-Modified header line based on main script of execution
+     * modified time. If unable to get a valid timestamp we use this class file
+     * modification time as fallback.
      * @return string|false
      */
     private function getLastModified()
     {
-        if ($this->scriptFile && is_file($this->scriptFile)) {
-            return gmdate(self::HTTP_DATE_FORMAT, filemtime($this->scriptFile));
-        }
-
-        return false;
+        $lastmod = getlastmod() ?: filemtime(__FILE__);
+        return $lastmod ? gmdate(self::HTTP_DATE_FORMAT, $lastmod) : false;
     }
 
     /**

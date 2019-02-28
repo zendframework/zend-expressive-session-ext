@@ -2,7 +2,7 @@
 
 All notable changes to this project will be documented in this file, in reverse chronological order by release.
 
-## 1.5.2 - TBD
+## 1.6.0 - 2019-02-28
 
 ### Added
 
@@ -10,7 +10,13 @@ All notable changes to this project will be documented in this file, in reverse 
 
 ### Changed
 
-- Nothing.
+- [#39](https://github.com/zendframework/zend-expressive-session-ext/pull/39) modifies the logic used to determine the value for the `Last-Modified`
+  header associated with the session cookie to use PHP's `getlastmod()` method,
+  providing a simpler, more reliable source.
+
+- [#40](https://github.com/zendframework/zend-expressive-session-ext/pull/40) modifies the logic that builds the session cookie to better parse the
+  entire spectrum of expected `php.ini` values for boolean flags, ensuring that
+  values such as "On" and "Off" evaluate to `true` and `false`, respectively.
 
 ### Deprecated
 
