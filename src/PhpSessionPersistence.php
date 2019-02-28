@@ -23,7 +23,6 @@ use function filemtime;
 use function getlastmod;
 use function gmdate;
 use function ini_get;
-use function is_file;
 use function random_bytes;
 use function session_id;
 use function session_name;
