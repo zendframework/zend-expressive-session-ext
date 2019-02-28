@@ -739,8 +739,12 @@ class PhpSessionPersistenceTest extends TestCase
     /**
      * @dataProvider cookieSettingsProvider
      */
-    public function testSetCookieOnSettings($secureIni, $httpOnlyIni, $expectedSecure, $expectedHttpOnly)
-    {
+    public function testThatSetCookieCorrectlyInterpretsIniSettings(
+        $secureIni,
+        $httpOnlyIni,
+        $expectedSecure,
+        $expectedHttpOnly
+    ) {
         $ini = $this->applyCustomSessionOptions([
             'cookie_secure'   => $secureIni,
             'cookie_httponly' => $httpOnlyIni,
