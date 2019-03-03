@@ -129,21 +129,8 @@ class PhpSessionPersistence implements SessionPersistenceInterface
             return $response;
         }
 
-        $response = FigResponseCookies::set(
-            $response,
-            $this->createSessionCookie(session_name(), $id, $this->getCookieLifetime($session))
-        );
-
-        if (! $this->cacheLimiter || $this->responseAlreadyHasCacheHeaders($response)) {
-            return $response;
-        }
-
-        $cacheHeaders = $this->generateCacheHeaders();
-        foreach ($cacheHeaders as $name => $value) {
-            if (false !== $value) {
-                $response = $response->withHeader($name, $value);
-            }
-        }
+        $response = $this->addSessionCookie($response, $id, $session);
+        $response = $this->addCacheHeaders($response);
 
         return $response;
     }
@@ -185,6 +172,22 @@ class PhpSessionPersistence implements SessionPersistenceInterface
     }
 
     /**
+     * Add a session set-cookie to the response
+     *
+     * @param string $id The id of the last started session
+     */
+    private function addSessionCookie(
+        ResponseInterface $response,
+        string $id,
+        SessionInterface $session
+    ) : ResponseInterface {
+        return FigResponseCookies::set(
+            $response,
+            $this->createSessionCookie(session_name(), $id, $this->getCookieLifetime($session))
+        );
+    }
+
+    /**
      * Build a SetCookie parsing boolean ini settings
      *
      * @param string $name The session name as the cookie name
@@ -216,6 +219,25 @@ class PhpSessionPersistence implements SessionPersistenceInterface
         }
 
         return $sessionCookie;
+    }
+
+    /**
+     * Add cache headers to the response when needed
+     */
+    private function addCacheHeaders(ResponseInterface $response) : ResponseInterface
+    {
+        if (! $this->cacheLimiter || $this->responseAlreadyHasCacheHeaders($response)) {
+            return $response;
+        }
+
+        $cacheHeaders = $this->generateCacheHeaders();
+        foreach ($cacheHeaders as $name => $value) {
+            if (false !== $value) {
+                $response = $response->withHeader($name, $value);
+            }
+        }
+
+        return $response;
     }
 
     /**
