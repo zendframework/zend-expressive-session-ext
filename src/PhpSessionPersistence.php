@@ -17,7 +17,6 @@ use Zend\Expressive\Session\SessionCookiePersistenceInterface;
 use Zend\Expressive\Session\SessionInterface;
 use Zend\Expressive\Session\SessionPersistenceInterface;
 
-use function array_merge;
 use function bin2hex;
 use function filemtime;
 use function getlastmod;
