@@ -213,11 +213,9 @@ class PhpSessionPersistence implements SessionPersistenceInterface
             ->withSecure($secure)
             ->withHttpOnly($httpOnly);
 
-        if ($cookieLifetime) {
-            return $sessionCookie->withExpires(time() + $cookieLifetime);
-        }
-
-        return $sessionCookie;
+        return $cookieLifetime
+            ? $sessionCookie->withExpires(time() + $cookieLifetime)
+            : $sessionCookie;
     }
 
     /**
