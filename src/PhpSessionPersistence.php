@@ -50,6 +50,7 @@ use const PHP_SESSION_ACTIVE;
 class PhpSessionPersistence implements SessionPersistenceInterface
 {
     /**
+     * Use non locking mode during session initialization?
      *
      * @var bool
      */
