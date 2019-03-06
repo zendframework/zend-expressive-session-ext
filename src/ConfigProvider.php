@@ -24,8 +24,8 @@ class ConfigProvider
             'aliases' => [
                 SessionPersistenceInterface::class => PhpSessionPersistence::class,
             ],
-            'invokables' => [
-                PhpSessionPersistence::class => PhpSessionPersistence::class,
+            'factories' => [
+                PhpSessionPersistence::class => PhpSessionPersistenceFactory::class,
             ],
         ];
     }

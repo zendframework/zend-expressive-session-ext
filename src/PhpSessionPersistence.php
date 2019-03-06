@@ -32,6 +32,7 @@ use function time;
 
 use const FILTER_NULL_ON_FAILURE;
 use const FILTER_VALIDATE_BOOLEAN;
+use const PHP_SESSION_ACTIVE;
 
 /**
  * Session persistence using ext-session.
@@ -48,6 +49,12 @@ use const FILTER_VALIDATE_BOOLEAN;
  */
 class PhpSessionPersistence implements SessionPersistenceInterface
 {
+    /**
+     *
+     * @var bool
+     */
+    private $nonLocking;
+
     /**
      * The time-to-live for cached session pages in minutes as specified in php
      * ini settings. This has no effect for 'nocache' limiter.
@@ -90,8 +97,10 @@ class PhpSessionPersistence implements SessionPersistenceInterface
      * Those headers will be added programmatically to the response along with
      * the session set-cookie header when the session data is persisted.
      */
-    public function __construct()
+    public function __construct(bool $nonLocking = false)
     {
+        $this->nonLocking = $nonLocking;
+
         $this->cacheLimiter = ini_get('session.cache_limiter');
         $this->cacheExpire  = (int) ini_get('session.cache_expire');
     }
@@ -100,7 +109,9 @@ class PhpSessionPersistence implements SessionPersistenceInterface
     {
         $sessionId = FigRequestCookies::get($request, session_name())->getValue() ?? '';
         if ($sessionId) {
-            $this->startSession($sessionId);
+            $this->startSession($sessionId, [
+                'read_and_close' => $this->nonLocking,
+            ]);
         }
         return new Session($_SESSION ?? [], $sessionId);
     }
@@ -116,10 +127,15 @@ class PhpSessionPersistence implements SessionPersistenceInterface
             || ('' === $id && $session->hasChanged())
         ) {
             $id = $this->regenerateSession();
+        } elseif ($this->nonLocking && $session->hasChanged()) {
+            // we reopen the initial session only if there are changes to write
+            $this->startSession($id);
         }
 
-        $_SESSION = $session->toArray();
-        session_write_close();
+        if (PHP_SESSION_ACTIVE === session_status()) {
+            $_SESSION = $session->toArray();
+            session_write_close();
+        }
 
         // If we do not have an identifier at this point, it means a new
         // session was created, but never written to. In that case, there's
