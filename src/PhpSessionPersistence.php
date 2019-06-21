@@ -118,6 +118,11 @@ class PhpSessionPersistence implements SessionPersistenceInterface
             return $response;
         }
 
+        // A session that did not change at all does not need to be sent to the browser
+        if (! $session->hasChanged()) {
+            return $response;
+        }
+
         $sessionCookie = $this->createSessionCookie(session_name(), $id);
 
         if ($cookieLifetime = $this->getCookieLifetime($session)) {
