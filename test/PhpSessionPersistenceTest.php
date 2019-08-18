@@ -777,4 +777,37 @@ class PhpSessionPersistenceTest extends TestCase
         // phpcs:enable
         // @codingStandardsIgnoreEnd
     }
+
+    public function testInitializeIdReturnsSessionWithId()
+    {
+        $persistence = new PhpSessionPersistence();
+        $session = new Session(['foo' => 'bar']);
+        $actual = $persistence->initializeId($session);
+
+        $this->assertNotSame($session, $actual);
+        $this->assertNotEmpty($actual->getId());
+        $this->assertSame(session_id(), $actual->getId());
+        $this->assertSame(['foo' => 'bar'], $actual->toArray());
+    }
+
+    public function testInitializeIdRegeneratesSessionId()
+    {
+        $persistence = new PhpSessionPersistence();
+        $session = new Session(['foo' => 'bar'], 'original-id');
+        $session = $session->regenerate();
+        $actual = $persistence->initializeId($session);
+
+        $this->assertNotEmpty($actual->getId());
+        $this->assertNotSame('original-id', $actual->getId());
+        $this->assertFalse($actual->isRegenerated());
+    }
+
+    public function testInitializeIdReturnsSessionUnaltered()
+    {
+        $persistence = new PhpSessionPersistence();
+        $session = new Session(['foo' => 'bar'], 'original-id');
+        $actual = $persistence->initializeId($session);
+
+        $this->assertSame($session, $actual);
+    }
 }
