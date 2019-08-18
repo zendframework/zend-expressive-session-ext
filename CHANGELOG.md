@@ -6,7 +6,8 @@ All notable changes to this project will be documented in this file, in reverse 
 
 ### Added
 
-- Nothing.
+- `PhpSessionPersistence` now implements `InitializeSessionIdInterface`, allowing access to the generated / regenerated 
+  session ID before the session is persisted.
 
 ### Changed
 
