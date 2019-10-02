@@ -43,9 +43,44 @@ class PhpSessionPersistenceTest extends TestCase
      */
     private $persistence;
 
+    /**
+     * @var array
+     */
+    private $originalSessionSettings;
+
+    /**
+     * @var string
+     */
+    private $sessionSavePath;
+
     public function setUp()
     {
+        $this->sessionSavePath = sys_get_temp_dir() . "/zend-expressive-session-ext";
+
+        $this->originalSessionSettings = $this->applyCustomSessionOptions([
+            'save_path' => $this->sessionSavePath,
+        ]);
+
+        // create a temp session save path
+        if (! is_dir($this->sessionSavePath)) {
+            mkdir($this->sessionSavePath);
+        }
+
+        // remove old session test files if any
+        $files = glob("{$this->sessionSavePath}/sess_*");
+        if ($files) {
+            foreach ($files as $file) {
+                unlink($file);
+            }
+        }
+
         $this->persistence = new PhpSessionPersistence();
+    }
+
+    public function tearDown()
+    {
+        session_write_close();
+        $this->restoreOriginalSessionIniSettings($this->originalSessionSettings);
     }
 
     public function startSession(string $id = null, array $options = [])
@@ -96,6 +131,12 @@ class PhpSessionPersistenceTest extends TestCase
         foreach ($ini as $key => $value) {
             ini_set($key, $value);
         }
+    }
+
+    private function assertPersistedSessionsCount(int $expectedCount): void
+    {
+        $files = glob("{$this->sessionSavePath}/sess_*");
+        $this->assertCount($expectedCount, $files);
     }
 
     public function testInitializeSessionFromRequestDoesNotStartPhpSessionIfNoSessionCookiePresent()
@@ -623,26 +664,10 @@ class PhpSessionPersistenceTest extends TestCase
 
     public function testNoMultipleEmptySessionFilesAreCreatedIfNoSessionCookiePresent()
     {
-        $sessionName     = 'NOSESSIONCOOKIESESSID';
-        $sessionSavePath = __DIR__ . "/sess";
-
+        $sessionName = 'NOSESSIONCOOKIESESSID';
         $ini = $this->applyCustomSessionOptions([
-            'name'      => $sessionName,
-            'save_path' => $sessionSavePath,
+            'name' => $sessionName,
         ]);
-
-        // create a temp session save path
-        if (! is_dir($sessionSavePath)) {
-            mkdir($sessionSavePath);
-        }
-
-        // remove old session test files if any
-        $files = glob("{$sessionSavePath}/sess_*");
-        if ($files) {
-            foreach ($files as $file) {
-                unlink($file);
-            }
-        }
 
         $persistence = new PhpSessionPersistence();
 
@@ -667,35 +692,17 @@ class PhpSessionPersistenceTest extends TestCase
             }
         }
 
-        $files = glob("{$sessionSavePath}/sess_*");
-
-        $this->assertCount(0, $files);
+        $this->assertPersistedSessionsCount(0);
 
         $this->restoreOriginalSessionIniSettings($ini);
     }
 
     public function testOnlyOneSessionFileIsCreatedIfNoSessionCookiePresentINFirstRequestButSessionDataChanged()
     {
-        $sessionName     = 'NOSESSIONCOOKIESESSID';
-        $sessionSavePath = __DIR__ . "/sess";
-
+        $sessionName = 'NOSESSIONCOOKIESESSID';
         $ini = $this->applyCustomSessionOptions([
-            'name'      => $sessionName,
-            'save_path' => $sessionSavePath,
+            'name' => $sessionName,
         ]);
-
-        // create a temp session save path
-        if (! is_dir($sessionSavePath)) {
-            mkdir($sessionSavePath);
-        }
-
-        // remove old session test files if any
-        $files = glob("{$sessionSavePath}/sess_*");
-        if ($files) {
-            foreach ($files as $file) {
-                unlink($file);
-            }
-        }
 
         $persistence = new PhpSessionPersistence();
 
@@ -721,9 +728,7 @@ class PhpSessionPersistenceTest extends TestCase
             }
         }
 
-        $files = glob("{$sessionSavePath}/sess_*");
-
-        $this->assertCount(1, $files);
+        $this->assertPersistedSessionsCount(1);
 
         $this->restoreOriginalSessionIniSettings($ini);
     }
