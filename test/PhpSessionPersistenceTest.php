@@ -21,7 +21,6 @@ use Zend\Diactoros\ServerRequest;
 use Zend\Expressive\Session\Ext\PhpSessionPersistence;
 use Zend\Expressive\Session\Session;
 use Zend\Expressive\Session\SessionCookiePersistenceInterface;
-
 use function filemtime;
 use function getlastmod;
 use function gmdate;
@@ -31,7 +30,6 @@ use function session_name;
 use function session_start;
 use function session_status;
 use function time;
-
 use const PHP_SESSION_ACTIVE;
 use const PHP_SESSION_NONE;
 
@@ -188,9 +186,9 @@ class PhpSessionPersistenceTest extends TestCase
      */
     public function testPersistSessionReturnsResponseWithSetCookieHeaderIfSessionCookiePresent()
     {
-        $request = $this->createSessionCookieRequest();
+        $request = $this->createSessionCookieRequest('use-this-id');
         $session = $this->persistence->initializeSessionFromRequest($request);
-        $session->set('foo', __METHOD__);
+        $session->set('foo', __METHOD__ . time());
 
         $response = new Response();
         $returnedResponse = $this->persistence->persistSession($session, $response);
