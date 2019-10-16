@@ -128,6 +128,11 @@ class PhpSessionPersistence implements SessionPersistenceInterface
             return $response;
         }
 
+        // A session that did not change at all does not need to be sent to the browser
+        if (! $session->hasChanged()) {
+            return $response;
+        }
+
         $response = $this->addSessionCookie($response, $id, $session);
         $response = $this->addCacheHeaders($response);
 

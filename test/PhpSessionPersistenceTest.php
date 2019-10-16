@@ -21,7 +21,6 @@ use Zend\Diactoros\ServerRequest;
 use Zend\Expressive\Session\Ext\PhpSessionPersistence;
 use Zend\Expressive\Session\Session;
 use Zend\Expressive\Session\SessionCookiePersistenceInterface;
-
 use function filemtime;
 use function getlastmod;
 use function gmdate;
@@ -31,7 +30,6 @@ use function session_name;
 use function session_start;
 use function session_status;
 use function time;
-
 use const PHP_SESSION_ACTIVE;
 use const PHP_SESSION_NONE;
 
@@ -190,6 +188,7 @@ class PhpSessionPersistenceTest extends TestCase
     {
         $request = $this->createSessionCookieRequest('use-this-id');
         $session = $this->persistence->initializeSessionFromRequest($request);
+        $session->set('foo', __METHOD__ . time());
 
         $response = new Response();
         $returnedResponse = $this->persistence->persistSession($session, $response);
@@ -237,6 +236,8 @@ class PhpSessionPersistenceTest extends TestCase
 
         $request  = $this->createSessionCookieRequest();
         $session  = $persistence->initializeSessionFromRequest($request);
+        $session->set('foo', __METHOD__);
+
         $response = $persistence->persistSession($session, new Response());
 
         // expected values
@@ -265,6 +266,7 @@ class PhpSessionPersistenceTest extends TestCase
 
         $request = $this->createSessionCookieRequest();
         $session = $persistence->initializeSessionFromRequest($request);
+        $session->set('foo', __METHOD__);
 
         // expected expire min timestamp value
         $expiresMin = time() + $maxAge;
@@ -299,6 +301,8 @@ class PhpSessionPersistenceTest extends TestCase
 
         $request  = $this->createSessionCookieRequest();
         $session  = $persistence->initializeSessionFromRequest($request);
+        $session->set('foo', __METHOD__);
+
         $response = $persistence->persistSession($session, new Response());
 
         // expected values
@@ -325,6 +329,8 @@ class PhpSessionPersistenceTest extends TestCase
 
         $request  = $this->createSessionCookieRequest();
         $session  = $persistence->initializeSessionFromRequest($request);
+        $session->set('foo', __METHOD__);
+
         $response = $persistence->persistSession($session, new Response());
 
         $control = sprintf('private, max-age=%d', $maxAge);
@@ -369,6 +375,8 @@ class PhpSessionPersistenceTest extends TestCase
 
         $request  = $this->createSessionCookieRequest();
         $session  = $persistence->initializeSessionFromRequest($request);
+        $session->set('foo', __METHOD__);
+
         $response = $persistence->persistSession($session, new Response());
 
         $lastmod = getlastmod();
@@ -563,11 +571,11 @@ class PhpSessionPersistenceTest extends TestCase
         $lifetime = 300;
 
         $persistence = new PhpSessionPersistence();
-        $request = new ServerRequest();
         $session = new Session([
             SessionCookiePersistenceInterface::SESSION_LIFETIME_KEY => $lifetime,
             'foo' => 'bar',
         ], 'abcdef123456');
+        $session->set('foo', __METHOD__);
 
         $expiresMin = time() + $lifetime;
         $response = $persistence->persistSession($session, new Response());
@@ -776,5 +784,24 @@ class PhpSessionPersistenceTest extends TestCase
         ];
         // phpcs:enable
         // @codingStandardsIgnoreEnd
+    }
+
+    public function testHeadersAreNotSentIfReloadedSessionDidNotChange()
+    {
+        $this->assertSame(PHP_SESSION_NONE, session_status());
+
+        $request = $this->createSessionCookieRequest('reloaded-session');
+        $session = $this->persistence->initializeSessionFromRequest($request);
+
+        $this->assertSame(PHP_SESSION_ACTIVE, session_status());
+        $this->assertInstanceOf(Session::class, $session);
+        $this->assertSame($_SESSION, $session->toArray());
+        $this->assertSame('reloaded-session', session_id());
+
+        $response = new Response();
+        $returnedResponse = $this->persistence->persistSession($session, $response);
+
+        $this->assertSame($returnedResponse, $response, 'returned response should have no cookie and no cache headers');
+        $this->assertEmpty($response->getHeaders());
     }
 }

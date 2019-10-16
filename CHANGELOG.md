@@ -44,7 +44,7 @@ All notable changes to this project will be documented in this file, in reverse 
 
 ### Fixed
 
-- Nothing.
+- [#44](https://github.com/zendframework/zend-expressive-session-ext/pull/44) prevents sending cookie and cache limiting headers when session data is unchanged.
 
 ## 1.6.0 - 2019-02-28
 
