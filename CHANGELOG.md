@@ -10,7 +10,9 @@ All notable changes to this project will be documented in this file, in reverse 
 
 ### Changed
 
-- Nothing.
+- [#45](https://github.com/zendframework/zend-expressive-session-ext/pull/45) updates `PhpSessionPersistence` to implement `Zend\Expressive\Session\InitializeSessionIdInterface`, allowing access to the generated / regenerated session ID before the session is persisted.
+
+- [#45](https://github.com/zendframework/zend-expressive-session-ext/pull/45) updates the minimum required version of zendframework/zend-expressive-session to 1.3.0.
 
 ### Deprecated
 

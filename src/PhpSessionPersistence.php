@@ -12,6 +12,8 @@ use Dflydev\FigCookies\FigResponseCookies;
 use Dflydev\FigCookies\SetCookie;
 use Psr\Http\Message\ResponseInterface;
 use Psr\Http\Message\ServerRequestInterface;
+use Zend\Expressive\Session\GenerateIdPersistenceInterface;
+use Zend\Expressive\Session\InitializePersistenceIdInterface;
 use Zend\Expressive\Session\Session;
 use Zend\Expressive\Session\SessionCookiePersistenceInterface;
 use Zend\Expressive\Session\SessionInterface;
@@ -47,7 +49,7 @@ use const PHP_SESSION_ACTIVE;
  * During persistence, if the session regeneration flag is true, a new session
  * identifier is created, and the session re-started.
  */
-class PhpSessionPersistence implements SessionPersistenceInterface
+class PhpSessionPersistence implements InitializePersistenceIdInterface, SessionPersistenceInterface
 {
     /**
      * Use non locking mode during session initialization?
@@ -154,6 +156,18 @@ class PhpSessionPersistence implements SessionPersistenceInterface
         $response = $this->addCacheHeaders($response);
 
         return $response;
+    }
+
+    public function initializeId(SessionInterface $session): SessionInterface
+    {
+        $id = $session->getId();
+        if ('' === $id || $session->isRegenerated()) {
+            $session = new Session($session->toArray(), $this->generateSessionId());
+        }
+
+        session_id($session->getId());
+
+        return $session;
     }
 
     /**
