@@ -6,7 +6,7 @@ All notable changes to this project will be documented in this file, in reverse 
 
 ### Added
 
-- Nothing.
+- [#43](https://github.com/zendframework/zend-expressive-session-ext/pull/43) adds the ability to mark sessions as non-locking; see [the documentation for details on configuration of this feature](https://docs.zendframework.com/zend-experssive-session-ext/intro/#enabling-non-locking-sessions).
 
 ### Changed
 
