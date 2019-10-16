@@ -804,4 +804,77 @@ class PhpSessionPersistenceTest extends TestCase
         $this->assertSame($returnedResponse, $response, 'returned response should have no cookie and no cache headers');
         $this->assertEmpty($response->getHeaders());
     }
+
+    public function testNonLockingSessionIsClosedAfterInitialize()
+    {
+        $persistence = new PhpSessionPersistence(true);
+
+        $request = $this->createSessionCookieRequest('non-locking-session-id');
+        $session = $persistence->initializeSessionFromRequest($request);
+        $this->assertSame(PHP_SESSION_NONE, session_status());
+        $response = $persistence->persistSession($session, new Response());
+    }
+
+    public function testSessionIsOpenAfterInitializeWithFalseNonLockingSetting()
+    {
+        $persistence = new PhpSessionPersistence(false);
+
+        $request = $this->createSessionCookieRequest('locking-session-id');
+        $session = $persistence->initializeSessionFromRequest($request);
+        $this->assertSame(PHP_SESSION_ACTIVE, session_status());
+        $response = $persistence->persistSession($session, new Response());
+    }
+
+    public function testNonLockingSessionDataIsPersisted()
+    {
+        $sid = 'non-locking-session-id';
+
+        $name  = 'non-locking-foo';
+        $value = 'non-locking-bar';
+
+        $persistence = new PhpSessionPersistence(true);
+
+        $request = $this->createSessionCookieRequest($sid);
+        $session = $persistence->initializeSessionFromRequest($request);
+        $session->set($name, $value);
+        $response = $persistence->persistSession($session, new Response());
+
+        $_SESSION = null;
+
+        // reopens the session file and check the contents
+        session_id($sid);
+        session_start();
+        $this->assertArrayHasKey($name, $_SESSION);
+        $this->assertSame($value, $_SESSION[$name]);
+        session_write_close();
+    }
+
+    public function testNonLockingRegeneratedSessionIsPersisted()
+    {
+        $sid = 'non-locking-session-id';
+
+        $name  = 'regenerated-non-locking-foo';
+        $value = 'regenerated-non-locking-bar';
+
+        $persistence = new PhpSessionPersistence(true);
+
+        $request = $this->createSessionCookieRequest($sid);
+        $session = $persistence->initializeSessionFromRequest($request);
+        $session->set($name, $value);
+        $session = $session->regenerate();
+        $response = $persistence->persistSession($session, new Response());
+
+        // get the regenerated session id from the response session cookie
+        $setCookie = FigResponseCookies::get($response, session_name());
+        $regeneratedId = $setCookie->getValue();
+
+        $_SESSION = null;
+
+        // reopens the session file and check the contents
+        session_id($regeneratedId);
+        session_start();
+        $this->assertArrayHasKey($name, $_SESSION);
+        $this->assertSame($value, $_SESSION[$name]);
+        session_write_close();
+    }
 }
