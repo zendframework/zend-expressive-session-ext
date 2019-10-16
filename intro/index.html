@@ -240,6 +240,29 @@ to it under the name <code>Zend\Expressive\Session\SessionPersistenceInterface</
 <p>Otherwise, you will need to map <code>Zend\Expressive\Session\SessionPersistenceInterface</code>
 to <code>Zend\Expressive\Session\Ext\PhpSessionPersistence</code> in your dependency
 injection container.</p>
+<h3>Enabling non locking sessions</h3>
+<p>The default behaviour of the php session extension is to lock the session file
+until <em>session_write_close</em> is called - usually at the end of script execution -
+in order to safely store the session data. This has the side effect of blocking
+every other script that request access to the same session file as for instance
+when performing concurrent ajax calls in a Single Page Application. The php session
+extension allows us to unlock the session file using the extra option <em>read_and_close</em>
+in <em>session_start</em>.</p>
+<p>This option can be enabled using the following configuration:</p>
+<p> <pre class=codehilite><code class=language-php>// file: data/session.global.php
+return [
+    'session' =&gt; [
+        'persistence' =&gt; [
+            'ext' =&gt; [
+                'non_locking' =&gt; true, // true|false, true =&gt; read_and_close = true
+            ],
+        ],
+    ],
+];</code></pre></p>
+<p>As for the php extension, we can use safely use this option only when we are sure
+that the session data won't be changed or when only one of the concurrent scripts
+may change it. The last script that changes and persists the session data will
+overwrite any previous change.</p>
 <h2 id="usage">Usage</h2>
 <p>In most cases, usage will be via <code>Zend\Expressive\Session\SessionMiddleware</code>,
 and will not require direct access to the service on your part. If you do need
