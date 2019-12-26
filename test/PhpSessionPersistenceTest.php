@@ -902,6 +902,9 @@ class PhpSessionPersistenceTest extends TestCase
         $this->assertFalse($actual->isRegenerated());
     }
 
+    /**
+     * @runInSeparateProcess
+     */
     public function testRegenerateWhenSessionAlreadyActiveDestroyExistingSessionFirst()
     {
         session_start();
