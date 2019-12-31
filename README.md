@@ -1,5 +1,9 @@
 # zend-expressive-session-ext
 
+> ## Repository abandoned 2019-12-31
+>
+> This repository has moved to mezzio/mezzio-session-ext.
+
 [![Build Status](https://secure.travis-ci.org/zendframework/zend-expressive-session-ext.svg?branch=master)](https://secure.travis-ci.org/zendframework/zend-expressive-session-ext)
 [![Coverage Status](https://coveralls.io/repos/github/zendframework/zend-expressive-session-ext/badge.svg?branch=master)](https://coveralls.io/github/zendframework/zend-expressive-session-ext?branch=master)
 
