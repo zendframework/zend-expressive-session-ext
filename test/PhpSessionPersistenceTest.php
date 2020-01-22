@@ -902,6 +902,33 @@ class PhpSessionPersistenceTest extends TestCase
         $this->assertFalse($actual->isRegenerated());
     }
 
+    public function testRegenerateWhenSessionAlreadyActiveDestroyExistingSessionFirst()
+    {
+        $sessionName     = 'NOSESSIONCOOKIESESSID';
+        $sessionSavePath = __DIR__ . "/sess";
+
+        $ini = $this->applyCustomSessionOptions([
+            'name'      => $sessionName,
+            'save_path' => $sessionSavePath,
+        ]);
+        session_start();
+
+        $_SESSION['test'] = 'value';
+        $fileSession = realpath(session_save_path() . '/sess_' . session_id());
+
+        $this->assertTrue(file_exists($fileSession));
+
+        $persistence = new PhpSessionPersistence();
+        $session     = new Session(['foo' => 'bar']);
+        $session     = $session->regenerate();
+        $persistence->persistSession($session, new Response());
+
+        $this->assertFalse(file_exists($fileSession));
+        @unlink(realpath(session_save_path() . '/sess_' . session_id()));
+
+        $this->restoreOriginalSessionIniSettings($ini);
+    }
+
     public function testInitializeIdReturnsSessionUnaltered()
     {
         $persistence = new PhpSessionPersistence();

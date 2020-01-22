@@ -25,6 +25,7 @@ use function getlastmod;
 use function gmdate;
 use function ini_get;
 use function random_bytes;
+use function session_destroy;
 use function session_id;
 use function session_name;
 use function session_start;
@@ -190,6 +191,10 @@ class PhpSessionPersistence implements InitializePersistenceIdInterface, Session
      */
     private function regenerateSession() : string
     {
+        if (PHP_SESSION_ACTIVE === session_status()) {
+            session_destroy();
+        }
+
         session_write_close();
         $id = $this->generateSessionId();
         $this->startSession($id, [
